@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -24,7 +27,8 @@ import android.widget.Toast;
 /**
  * Created by twinone on 6/20/15.
  */
-public class CameraFragment extends Fragment implements View.OnClickListener, Camera.PictureCallback, View.OnTouchListener {
+@SuppressWarnings("deprecation")
+public class CameraFragment extends Fragment implements View.OnClickListener, Camera.PictureCallback {
 
     private static final String TAG = "CameraFragment";
 
@@ -86,16 +90,16 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         }
         mCamera = getCameraInstance(mCameraId);
         mCameraPreview = new CameraPreview(getActivity(), mCamera);
-        mCameraPreview.setOnTouchListener(this);
 
         mCameraRotation = getCameraRotation(getActivity(), mCameraId, mCamera);
         mCamera.setDisplayOrientation(mCameraRotation);
 
         mFrameLayout.removeAllViews();
-        mHLView = new HighlightView(getActivity());
-        mRelativeLayout.addView(mHLView);
         mFrameLayout.addView(mCameraPreview);
 
+        if (mHLView != null && mHLView.getParent() == mRelativeLayout) mRelativeLayout.removeView(mHLView);
+        mHLView = new HighlightView(getActivity());
+        mRelativeLayout.addView(mHLView);
     }
 
     @Override
@@ -147,10 +151,14 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
 
         int sw = mCameraPreview.getWidth();
         int sh = mCameraPreview.getHeight();
-        Log.d(TAG, "Screen dimensions: " + sw + "x" + sh);
+        Log.d(TAG, "Preview dimensions: " + sw + "x" + sh);
 
         mButtonCapture.setTextColor(b.getPixel(w / 2, h / 2));
         mButtonCapture.setBackground(new BitmapDrawable(b));
+    }
+
+    double map(double a, double from, double to) {
+        return a / from * to;
     }
 
     public static Bitmap rotateBitmap(Bitmap source, float angle) {
@@ -192,11 +200,29 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         return result;
     }
 
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            Log.d(TAG, "Touch at " + event.getX() + "," + event.getY());
+    double[] average(Bitmap bm) {
+        int w = bm.getWidth();
+        int h = bm.getHeight();
+        int s = w * h;
+        double r = 0;
+        double g = 0;
+        double b = 0;
+        int[] pixels = new int[s];
+        bm.getPixels(pixels, 0, w, 0, 0, w, h);
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                int c = pixels[i * w + j];
+                int pr = Color.red(c);
+                int pg = Color.green(c);
+                int pb = Color.blue(c);
+                r += pr * pr;
+                g += pg * pg;
+                b += pb * pb;
+            }
         }
-        return false;
+        r = Math.sqrt(r / (double) s);
+        g = Math.sqrt(g / (double) s);
+        b = Math.sqrt(b / (double) s);
+        return new double[]{r, g, b};
     }
 }

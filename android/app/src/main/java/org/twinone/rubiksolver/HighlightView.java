@@ -61,7 +61,6 @@ class HighlightView extends View implements View.OnTouchListener {
     public void init() {
         setWillNotDraw(false);
 
-        Log.d("HLView", "Parent: " + mParentW + "x" + mParentH);
         float scale = 0.8f;
         int s = (int) (scale * Math.min(mParentW, mParentH));
         int marginLeft = (mParentW - s) / 2;
@@ -134,8 +133,16 @@ class HighlightView extends View implements View.OnTouchListener {
             if (mHitVertex != -1) return true;
         } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
             if (mHitVertex != -1) {
-                mCoords[mHitVertex].x = (int) event.getX();
-                mCoords[mHitVertex].y = (int) event.getY();
+                // Don't allow crossing the center
+                float x = (mHitVertex == TOP_LEFT || mHitVertex == BOTTOM_LEFT)
+                        ? (Math.min(mParentW/2,event.getX()))
+                        : (Math.max(mParentW/2,event.getX()));
+                float y = (mHitVertex == TOP_LEFT || mHitVertex == TOP_RIGHT)
+                        ? (Math.min(mParentH/2,event.getY()))
+                        : (Math.max(mParentH/2,event.getY()));
+
+                mCoords[mHitVertex].x = (int) x;
+                mCoords[mHitVertex].y = (int) y;
                 invalidate();
                 return true;
             }
@@ -151,11 +158,8 @@ class HighlightView extends View implements View.OnTouchListener {
      * Returns the vertex that was hit or -1
      */
     private int getHit(int x, int y) {
-        Log.d("HLView", "getHit():" + x + " " + y);
         for (int i = 0; i < 4; i++) {
-            Log.d("HLView", "getHit() Coords[" + i + "]: " + mCoords[i].x + " " + mCoords[i].y);
             if (dist(mCoords[i].x, mCoords[i].y, x, y) < VERTEX_TOUCH_RADIUS) {
-                Log.d("HLView", "Returning coordinate" + i);
                 return i;
             }
         }
