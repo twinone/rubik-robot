@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -190,6 +194,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         canvas.drawVertices(Canvas.VertexMode.TRIANGLE_FAN, 8, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, src, 0, null, 0, null, 0, 0, paint);
 
         mButtonCapture.setBackground(new BitmapDrawable(target));
+        mCamera.startPreview();
     }
 
     public static Bitmap rotateBitmap(Bitmap source, float angle) {

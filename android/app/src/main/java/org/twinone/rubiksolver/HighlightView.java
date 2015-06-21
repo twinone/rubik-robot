@@ -163,8 +163,8 @@ class HighlightView extends View implements View.OnTouchListener {
                         ? (Math.min(mParentH / 2, event.getY()))
                         : (Math.max(mParentH / 2, event.getY()));
 
-                mCoords[mHitVertex].x = (int) x;
-                mCoords[mHitVertex].y = (int) y;
+                mCoords[mHitVertex].x = Math.round(x);
+                mCoords[mHitVertex].y = Math.round(y);
                 invalidate();
                 return true;
             }
