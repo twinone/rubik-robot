@@ -45,17 +45,8 @@ class HighlightView extends View implements View.OnTouchListener {
      * @return the trapezoid's coordinates in the following order:
      * TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
      */
-    public float[] getCoords() {
-        return pointsToFloats(mCoords);
-    }
-
-    float[] pointsToFloats(Point[] points) {
-        float[] r = new float[points.length * 2];
-        for (int i = 0; i < points.length; i++) {
-            r[i] = points[i].x;
-            r[i + 1] = points[i].y;
-        }
-        return r;
+    public Point[] getCoords() {
+        return mCoords;
     }
 
     private int mHitVertex = -1;
