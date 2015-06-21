@@ -176,6 +176,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         }
 
         /**
+         * FIXME: process outside main thread, reuse bitmap & canvas
          * Convert the selected trapezoid into a square of size 100
          * @see HighlightView#getCoords()
          */
@@ -183,20 +184,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         int tw = target.getWidth();
         int th = target.getHeight();
 
-        Matrix m = new Matrix();
+        Canvas canvas = new Canvas(target);
+        Paint paint = new Paint();
+        paint.setShader(new BitmapShader(b, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+        canvas.drawVertices(Canvas.VertexMode.TRIANGLE_FAN, 8, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, src, 0, null, 0, null, 0, 0, paint);
 
-        m.setPolyToPoly(src, 0, new float[]{0,0, tw,0, tw,th, 0,th}, 0, 4);
-        new Canvas(target).drawBitmap(b, m, null);
         mButtonCapture.setBackground(new BitmapDrawable(target));
-    }
-
-    float[] pointsToFloats(Point[] points) {
-        float[] r = new float[points.length * 2];
-        for (int i = 0; i < points.length; i++) {
-            r[i] = points[i].x;
-            r[i + 1] = points[i].y;
-        }
-        return r;
     }
 
     public static Bitmap rotateBitmap(Bitmap source, float angle) {
