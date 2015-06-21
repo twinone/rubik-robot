@@ -152,6 +152,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         int sw = mCameraPreview.getWidth();
         int sh = mCameraPreview.getHeight();
 
+        /**
+         * Map screen coordinates to image coordinates
+         */
 //        Log.d(TAG, "Image dimensions: " + w + "x" + h);
 //        Log.d(TAG, "Preview dimensions: " + sw + "x" + sh);
         float[] coords = mHLView.getCoords();
@@ -162,6 +165,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
             coords[i + 1] = (int) map(coords[i + 1], sh, h);
         }
 
+        /**
+         * Convert the selected trapezoid into a square of size 100
+         * @see HighlightView#getCoords() 
+         */
         Matrix m = new Matrix();
         m.setPolyToPoly(coords, 0, new float[]{0,0,100,0,100,100,0,100}, 0, 3);
         b = b.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), m, true);
