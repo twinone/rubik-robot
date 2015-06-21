@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
@@ -166,26 +167,27 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         /**
          * Map screen coordinates to image coordinates
          */
-//        Log.d(TAG, "Image dimensions: " + w + "x" + h);
-//        Log.d(TAG, "Preview dimensions: " + sw + "x" + sh);
-        float[] coords = mHLView.getCoords();
-        for (int i = 0; i < 4; i++) {
-            Log.d(TAG, "Mapped (" + coords[i * 2] + "," + coords[i * 2 + 1] + ") to (" +
-                    map(coords[i * 2], sw, w) + "," + map(coords[i * 2 + 1], sh, h));
-            coords[i * 2] = (int) map(coords[2 * i], sw, w);
-            coords[i * 2 + 1] = (int) map(coords[i * 2 + 1], sh, h);
+        Point[] coords = mHLView.getCoords();
+        float[] src = new float[coords.length * 2];
+        for (int i = 0; i < coords.length; i++) {
+            Point coord = coords[i];
+            src[i*2 + 0] = (coord.x / (float)sw) * w;
+            src[i*2 + 1] = (coord.y / (float)sh) * h;
         }
 
         /**
          * Convert the selected trapezoid into a square of size 100
          * @see HighlightView#getCoords()
          */
+        Bitmap target = Bitmap.createBitmap(100, 100, b.getConfig());
+        int tw = target.getWidth();
+        int th = target.getHeight();
+
         Matrix m = new Matrix();
-        m.setPolyToPoly(coords, 0, new float[]{0, 0, b.getWidth(), 0, b.getWidth(), b.getHeight(), 0, b.getHeight()}, 0, 3);
 
-        b = b.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), m, true);
-
-        mButtonCapture.setBackground(new BitmapDrawable(b));
+        m.setPolyToPoly(src, 0, new float[]{0,0, tw,0, tw,th, 0,th}, 0, 4);
+        new Canvas(target).drawBitmap(b, m, null);
+        mButtonCapture.setBackground(new BitmapDrawable(target));
     }
 
     float[] pointsToFloats(Point[] points) {
@@ -195,10 +197,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
             r[i + 1] = points[i].y;
         }
         return r;
-    }
-
-    double map(double a, double from, double to) {
-        return a / from * to;
     }
 
     public static Bitmap rotateBitmap(Bitmap source, float angle) {
