@@ -20,6 +20,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -39,11 +41,28 @@ class HighlightView extends View implements View.OnTouchListener {
     private Paint mThirdsPaint;
     private Paint mCornerHandlePaint;
 
+    /**
+     * @return the trapezoid's coordinates in the following order:
+     * TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT
+     */
+    public float[] getCoords() {
+        return pointsToFloats(mCoords);
+    }
+
+    float[] pointsToFloats(Point[] points) {
+        float[] r = new float[points.length * 2];
+        for (int i = 0; i < points.length; i++) {
+            r[i] = points[i].x;
+            r[i + 1] = points[i].y;
+        }
+        return r;
+    }
+
     private int mHitVertex = -1;
 
 
     // Clockwise, starting at top left
-    Point[] mCoords = new Point[4];
+    Point[] mCoords;
 
 
     public HighlightView(Context context) {
@@ -66,17 +85,20 @@ class HighlightView extends View implements View.OnTouchListener {
         int marginLeft = (mParentW - s) / 2;
         int marginTop = (mParentH - s) / 2;
 
-        mCoords[0] = new Point(marginLeft + 0, marginTop + 0);
-        mCoords[1] = new Point(marginLeft + s, marginTop + 0);
-        mCoords[2] = new Point(marginLeft + s, marginTop + s);
-        mCoords[3] = new Point(marginLeft + 0, marginTop + s);
+        if (mCoords == null) {
+            mCoords = new Point[4];
+            mCoords[0] = new Point(marginLeft + 0, marginTop + 0);
+            mCoords[1] = new Point(marginLeft + s, marginTop + 0);
+            mCoords[2] = new Point(marginLeft + s, marginTop + s);
+            mCoords[3] = new Point(marginLeft + 0, marginTop + s);
+        }
 
         mBorderPaint = new Paint();
-        mBorderPaint.setColor(0xffffffff);
+        mBorderPaint.setColor(Color.WHITE);
         mBorderPaint.setStrokeWidth(10.0f);
 
         mThirdsPaint = new Paint();
-        mThirdsPaint.setColor(0xffffffff);
+        mThirdsPaint.setColor(Color.WHITE);
         mThirdsPaint.setStrokeWidth(2.0f);
 
         mCornerHandlePaint = new Paint();
@@ -135,11 +157,11 @@ class HighlightView extends View implements View.OnTouchListener {
             if (mHitVertex != -1) {
                 // Don't allow crossing the center
                 float x = (mHitVertex == TOP_LEFT || mHitVertex == BOTTOM_LEFT)
-                        ? (Math.min(mParentW/2,event.getX()))
-                        : (Math.max(mParentW/2,event.getX()));
+                        ? (Math.min(mParentW / 2, event.getX()))
+                        : (Math.max(mParentW / 2, event.getX()));
                 float y = (mHitVertex == TOP_LEFT || mHitVertex == TOP_RIGHT)
-                        ? (Math.min(mParentH/2,event.getY()))
-                        : (Math.max(mParentH/2,event.getY()));
+                        ? (Math.min(mParentH / 2, event.getY()))
+                        : (Math.max(mParentH / 2, event.getY()));
 
                 mCoords[mHitVertex].x = (int) x;
                 mCoords[mHitVertex].y = (int) y;
@@ -170,6 +192,26 @@ class HighlightView extends View implements View.OnTouchListener {
         float dx = Math.abs(x1 - x2);
         float dy = Math.abs(y1 - y2);
         return (float) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("state", super.onSaveInstanceState());
+        bundle.putParcelableArray("coords", mCoords);
+        return bundle;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+            mCoords = (Point[]) bundle.getParcelableArray("coords");
+            // ... load everything
+            state = bundle.getParcelable("state");
+        }
+        super.onRestoreInstanceState(state);
     }
 
 }

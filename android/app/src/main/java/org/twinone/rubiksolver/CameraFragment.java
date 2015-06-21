@@ -97,7 +97,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         mFrameLayout.removeAllViews();
         mFrameLayout.addView(mCameraPreview);
 
-        if (mHLView != null && mHLView.getParent() == mRelativeLayout) mRelativeLayout.removeView(mHLView);
+        if (mHLView != null && mHLView.getParent() == mRelativeLayout)
+            mRelativeLayout.removeView(mHLView);
         mHLView = new HighlightView(getActivity());
         mRelativeLayout.addView(mHLView);
     }
@@ -147,14 +148,34 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         Bitmap b = rotateBitmap(BitmapFactory.decodeByteArray(data, 0, data.length), mCameraRotation);
         int w = b.getWidth();
         int h = b.getHeight();
-        Log.d(TAG, "Image dimensions: " + w + "x" + h);
 
         int sw = mCameraPreview.getWidth();
         int sh = mCameraPreview.getHeight();
-        Log.d(TAG, "Preview dimensions: " + sw + "x" + sh);
 
-        mButtonCapture.setTextColor(b.getPixel(w / 2, h / 2));
+//        Log.d(TAG, "Image dimensions: " + w + "x" + h);
+//        Log.d(TAG, "Preview dimensions: " + sw + "x" + sh);
+        float[] coords = mHLView.getCoords();
+        for (int i = 0; i < 4; i++) {
+//            Log.d(TAG, "Mapped (" + coords[i].x + "," + coords[i].y + ") to (" +
+//                    map(coords[i].x, sw, w) + "," + map(coords[i].y, sh, h));
+            coords[i] = (int) map(coords[i], sw, w);
+            coords[i + 1] = (int) map(coords[i + 1], sh, h);
+        }
+
+        Matrix m = new Matrix();
+        m.setPolyToPoly(coords, 0, new float[]{0,0,100,0,100,100,0,100}, 0, 3);
+        b = b.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), m, true);
+
         mButtonCapture.setBackground(new BitmapDrawable(b));
+    }
+
+    float[] pointsToFloats(Point[] points) {
+        float[] r = new float[points.length * 2];
+        for (int i = 0; i < points.length; i++) {
+            r[i] = points[i].x;
+            r[i + 1] = points[i].y;
+        }
+        return r;
     }
 
     double map(double a, double from, double to) {

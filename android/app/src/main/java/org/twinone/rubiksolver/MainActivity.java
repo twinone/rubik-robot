@@ -8,7 +8,7 @@ import android.view.MenuItem;
 
 public class MainActivity extends ActionBarActivity {
 
-    public static final int SIZE = 3; // TODO:Twinone change to somewhere else?
+    public static final int SIZE = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
