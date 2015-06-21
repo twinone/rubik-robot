@@ -43,6 +43,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
     private int mCameraRotation;
     private HighlightView mHLView;
     private RelativeLayout mRelativeLayout;
+    private View[] mSquare = new View[9];
 
     @Nullable
     @Override
@@ -101,6 +102,16 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
             mRelativeLayout.removeView(mHLView);
         mHLView = new HighlightView(getActivity());
         mRelativeLayout.addView(mHLView);
+
+        mSquare[0] = mRelativeLayout.findViewById(R.id.v0);
+        mSquare[1] = mRelativeLayout.findViewById(R.id.v1);
+        mSquare[2] = mRelativeLayout.findViewById(R.id.v2);
+        mSquare[3] = mRelativeLayout.findViewById(R.id.v3);
+        mSquare[4] = mRelativeLayout.findViewById(R.id.v4);
+        mSquare[5] = mRelativeLayout.findViewById(R.id.v5);
+        mSquare[6] = mRelativeLayout.findViewById(R.id.v6);
+        mSquare[7] = mRelativeLayout.findViewById(R.id.v7);
+        mSquare[8] = mRelativeLayout.findViewById(R.id.v8);
     }
 
     @Override
@@ -159,18 +170,19 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
 //        Log.d(TAG, "Preview dimensions: " + sw + "x" + sh);
         float[] coords = mHLView.getCoords();
         for (int i = 0; i < 4; i++) {
-//            Log.d(TAG, "Mapped (" + coords[i].x + "," + coords[i].y + ") to (" +
-//                    map(coords[i].x, sw, w) + "," + map(coords[i].y, sh, h));
-            coords[i] = (int) map(coords[i], sw, w);
-            coords[i + 1] = (int) map(coords[i + 1], sh, h);
+            Log.d(TAG, "Mapped (" + coords[i * 2] + "," + coords[i * 2 + 1] + ") to (" +
+                    map(coords[i * 2], sw, w) + "," + map(coords[i * 2 + 1], sh, h));
+            coords[i * 2] = (int) map(coords[2 * i], sw, w);
+            coords[i * 2 + 1] = (int) map(coords[i * 2 + 1], sh, h);
         }
 
         /**
          * Convert the selected trapezoid into a square of size 100
-         * @see HighlightView#getCoords() 
+         * @see HighlightView#getCoords()
          */
         Matrix m = new Matrix();
-        m.setPolyToPoly(coords, 0, new float[]{0,0,100,0,100,100,0,100}, 0, 3);
+        m.setPolyToPoly(coords, 0, new float[]{0, 0, b.getWidth(), 0, b.getWidth(), b.getHeight(), 0, b.getHeight()}, 0, 3);
+
         b = b.createBitmap(b, 0, 0, b.getWidth(), b.getHeight(), m, true);
 
         mButtonCapture.setBackground(new BitmapDrawable(b));

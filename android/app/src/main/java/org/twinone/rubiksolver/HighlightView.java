@@ -52,8 +52,8 @@ class HighlightView extends View implements View.OnTouchListener {
     float[] pointsToFloats(Point[] points) {
         float[] r = new float[points.length * 2];
         for (int i = 0; i < points.length; i++) {
-            r[i] = points[i].x;
-            r[i + 1] = points[i].y;
+            r[i*2] = points[i].x;
+            r[i*2 + 1] = points[i].y;
         }
         return r;
     }
@@ -91,6 +91,13 @@ class HighlightView extends View implements View.OnTouchListener {
             mCoords[1] = new Point(marginLeft + s, marginTop + 0);
             mCoords[2] = new Point(marginLeft + s, marginTop + s);
             mCoords[3] = new Point(marginLeft + 0, marginTop + s);
+
+            mCoords[0].x += 400;
+            mCoords[1].x -= 400;
+            mCoords[0].y += 200;
+            mCoords[1].y += 200;
+            mCoords[2].y -= 500;
+            mCoords[3].y -= 500;
         }
 
         mBorderPaint = new Paint();
