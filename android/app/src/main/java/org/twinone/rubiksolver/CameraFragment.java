@@ -2,32 +2,23 @@ package org.twinone.rubiksolver;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.PixelFormat;
-import android.graphics.Point;
-import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
-import android.media.ExifInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.TextView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 /**
@@ -46,18 +37,20 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
     private Camera mCamera;
     private int mCameraId;
     private int mCameraRotation;
+    private HighlightView mHLView;
+    private RelativeLayout mRelativeLayout;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
 
-        View root = inflater.inflate(R.layout.fragment_camera, null);
-        mButtonCapture = (Button) root.findViewById(R.id.button_capture);
+        mRelativeLayout = (RelativeLayout) inflater.inflate(R.layout.fragment_camera, null);
+        mButtonCapture = (Button) mRelativeLayout.findViewById(R.id.button_capture);
         mButtonCapture.setOnClickListener(this);
 
-        mFrameLayout = (FrameLayout) root.findViewById(R.id.frame_layout);
-        return root;
+        mFrameLayout = (FrameLayout) mRelativeLayout.findViewById(R.id.frame_layout);
+        return mRelativeLayout;
     }
 
     public static Camera getCameraInstance(int id) {
@@ -94,10 +87,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         mCamera = getCameraInstance(mCameraId);
         mCameraPreview = new CameraPreview(getActivity(), mCamera);
         mCameraPreview.setOnTouchListener(this);
+
         mCameraRotation = getCameraRotation(getActivity(), mCameraId, mCamera);
         mCamera.setDisplayOrientation(mCameraRotation);
 
         mFrameLayout.removeAllViews();
+        mHLView = new HighlightView(getActivity());
+        mRelativeLayout.addView(mHLView);
         mFrameLayout.addView(mCameraPreview);
 
     }
@@ -147,13 +143,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         Bitmap b = rotateBitmap(BitmapFactory.decodeByteArray(data, 0, data.length), mCameraRotation);
         int w = b.getWidth();
         int h = b.getHeight();
-        Log.d(TAG, "Image dimensions: "+ w + "x" + h);
+        Log.d(TAG, "Image dimensions: " + w + "x" + h);
 
         int sw = mCameraPreview.getWidth();
         int sh = mCameraPreview.getHeight();
-        Log.d(TAG, "Screen dimensions: "+sw+ "x" + sh);
+        Log.d(TAG, "Screen dimensions: " + sw + "x" + sh);
 
-        mButtonCapture.setTextColor(b.getPixel(w/2,h/2));
+        mButtonCapture.setTextColor(b.getPixel(w / 2, h / 2));
         mButtonCapture.setBackground(new BitmapDrawable(b));
     }
 
