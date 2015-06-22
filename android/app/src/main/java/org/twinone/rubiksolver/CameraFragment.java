@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -95,6 +96,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
             return;
         }
         mCamera = getCameraInstance(mCameraId);
+        setupCameraSizes();
         mCameraPreview = new CameraPreview(getActivity(), mCamera);
 
         mCameraRotation = getCameraRotation(getActivity(), mCameraId, mCamera);
@@ -119,21 +121,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         mSquare[8] = mRelativeLayout.findViewById(R.id.v8);
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        mCamera.release();
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (v.getId() == R.id.button_capture) {
-            capture();
-        }
-    }
-
-    void capture() {
+    void setupCameraSizes() {
         Log.d(TAG, "Capturing...");
         Camera.Parameters p = mCamera.getParameters();
 
@@ -152,9 +140,36 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         }
         Log.d(TAG, "Setting camera resolution:" + w + "x" + h);
         p.setPictureSize(w, h);
+        p.setPreviewSize(w, h);
 
         mCamera.setParameters(p);
-        mCamera.takePicture(null, null, this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        mCamera.release();
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.button_capture) {
+            capture();
+        }
+    }
+
+    void capture() {
+        mCamera.autoFocus(new Camera.AutoFocusCallback() {
+            @Override
+            public void onAutoFocus(boolean success, Camera camera) {
+                if (success) {
+                    mCamera.takePicture(null, null, CameraFragment.this);
+
+                }
+                else capture();
+            }
+        });
     }
 
     @Override
@@ -170,31 +185,87 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
 
         /**
          * Map screen coordinates to image coordinates
+         * Assumes aspect ratios of preview and image are the same
          */
         Point[] coords = mHLView.getCoords();
         float[] src = new float[coords.length * 2];
         for (int i = 0; i < coords.length; i++) {
             Point coord = coords[i];
-            src[i*2 + 0] = (coord.x / (float)sw) * w;
-            src[i*2 + 1] = (coord.y / (float)sh) * h;
+            src[i * 2 + 0] = (coord.x / (float) sw) * w;
+            src[i * 2 + 1] = (coord.y / (float) sh) * h;
         }
+
+        // This works (most of the time) but it's so ugly and long...
+//        // Bounding box around the trapezoid
+//        float[] bb = src.clone();
+//        // min x
+//        if (bb[0] < bb[6]) bb[6] = bb[0];
+//        else bb[0] = bb[6];
+//        // max x
+//        if (bb[2] > bb[4]) bb[4] = bb[2];
+//        else bb[2] = bb[4];
+//        // min y
+//        if (bb[1] < bb[3]) bb[3] = bb[1];
+//        else bb[1] = bb[3];
+//        // max y
+//        if (bb[5] > bb[7]) bb[7] = bb[5];
+//        else bb[5] = bb[7];
+//
+//        b = Bitmap.createBitmap(b,(int)bb[0],(int)bb[1],(int)(bb[2]-bb[0]),(int)(bb[7]-bb[1]));
+//
+//        // Map to bounding box coordinate space
+//        for (int i = 0; i < 4; i++) {
+//            src[2*i] -= bb[0];
+//            src[2*i+1] -= bb[1];
+//        }
+//        float[] tgt = src.clone();
+//        tgt[0] = tgt[6];
+//        tgt[2] = tgt[4];
+
 
         /**
          * FIXME: process outside main thread, reuse bitmap & canvas
          * Convert the selected trapezoid into a square of size 100
          * @see HighlightView#getCoords()
          */
-        Bitmap target = Bitmap.createBitmap(100, 100, b.getConfig());
+        Bitmap target = Bitmap.createBitmap(b.getWidth(), b.getHeight(), b.getConfig());
         int tw = target.getWidth();
         int th = target.getHeight();
 
         Canvas canvas = new Canvas(target);
-        Paint paint = new Paint();
-        paint.setShader(new BitmapShader(b, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-        canvas.drawVertices(Canvas.VertexMode.TRIANGLE_FAN, 8, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, src, 0, null, 0, null, 0, 0, paint);
+//        Paint paint = new Paint();
+//        paint.setShader(new BitmapShader(b, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+//        canvas.drawVertices(Canvas.VertexMode.TRIANGLE_STRIP, 8, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, src, 0, null, 0, null, 0, 0, paint);
+        Matrix m = new Matrix();
+        m.setPolyToPoly(src, 0, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, 4);
+        canvas.drawBitmap(b, m, null);
 
-        mButtonCapture.setBackground(new BitmapDrawable(target));
-        mCamera.startPreview();
+        ImageView iv = new ImageView(getActivity());
+        iv.setImageBitmap(target);
+        mRelativeLayout.addView(iv);
+
+        Side side = getSideFromBitmap(target);
+        mButtonCapture.setBackgroundColor(side.m[0][0]);
+//
+//        mButtonCapture.setBackground(new BitmapDrawable(target));
+    }
+
+    private Side getSideFromBitmap(Bitmap b) {
+        int size = MainActivity.SIZE;
+        int dx = b.getWidth() / size;
+        int dy = b.getHeight() / size;
+        // Sticker margin
+        int sm = (int)(Math.min(dy,dx) * 0.2);
+        Side s = new Side(size);
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                Bitmap bm = Bitmap.createBitmap(b, i*dx+sm, j*dy+sm, dx-sm*2, dy-sm*2);
+                s.m[i][j] = averageColor(bm);
+//                mSquare[j*size+i].setBackground(new BitmapDrawable(bm));
+                mSquare[j*size+i].setBackgroundColor(s.m[i][j]);
+            }
+        }
+        return s;
     }
 
     public static Bitmap rotateBitmap(Bitmap source, float angle) {
@@ -236,6 +307,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         return result;
     }
 
+    int doubleArrayToColor(double[] array) {
+        return Color.rgb((int)array[0],(int)array[1],(int)array[2]);
+    }
+
     double[] average(Bitmap bm) {
         int w = bm.getWidth();
         int h = bm.getHeight();
@@ -260,5 +335,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         g = Math.sqrt(g / (double) s);
         b = Math.sqrt(b / (double) s);
         return new double[]{r, g, b};
+    }
+    int averageColor(Bitmap b) {
+        return doubleArrayToColor(average(b));
     }
 }

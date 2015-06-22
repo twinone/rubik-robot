@@ -73,7 +73,7 @@ class HighlightView extends View implements View.OnTouchListener {
     public void init() {
         setWillNotDraw(false);
 
-        float scale = 0.8f;
+        float scale = 0.6f;
         int s = (int) (scale * Math.min(mParentW, mParentH));
         int marginLeft = (mParentW - s) / 2;
         int marginTop = (mParentH - s) / 2;
@@ -84,13 +84,6 @@ class HighlightView extends View implements View.OnTouchListener {
             mCoords[1] = new Point(marginLeft + s, marginTop + 0);
             mCoords[2] = new Point(marginLeft + s, marginTop + s);
             mCoords[3] = new Point(marginLeft + 0, marginTop + s);
-
-            mCoords[0].x += 400;
-            mCoords[1].x -= 400;
-            mCoords[0].y += 200;
-            mCoords[1].y += 200;
-            mCoords[2].y -= 500;
-            mCoords[3].y -= 500;
         }
 
         mBorderPaint = new Paint();
