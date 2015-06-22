@@ -3,7 +3,7 @@ thickness = 3;
 
 screw_r = 3/2;
 screw_spacing = 10;
-screw_num = 13;
+screw_num = 12;
 
 $fn=20;
 module screw() {
@@ -26,5 +26,12 @@ module base() {
         }
     }
 }
-
-base();
+difference() {
+    base();
+    l = 25;
+    s = 30;
+    for (i = [1,-1]) for (j = [1,-1]) {
+        translate([-l*i,-l*j,0])
+        #cube([s,s,30],center=true);
+    }
+}
