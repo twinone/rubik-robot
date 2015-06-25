@@ -1,23 +1,19 @@
 package org.twinone.rubiksolver;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -27,8 +23,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.view.ViewGroup.LayoutParams;
+
+import java.text.DecimalFormat;
 
 /**
  * Created by twinone on 6/20/15.
@@ -49,7 +50,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
     private int mCameraRotation;
     private HighlightView mHLView;
     private RelativeLayout mRelativeLayout;
-    private View[] mSquare = new View[9];
+    private TextView[][] mSquare = new TextView[MainActivity.SIZE][MainActivity.SIZE];
+    private Layer[] mLayers = new Layer[6];
 
     @Nullable
     @Override
@@ -90,13 +92,20 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
     public void onStart() {
         super.onStart();
 
+        mRelativeLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mCamera.autoFocus(null);
+                return true;
+            }
+        });
         mCameraId = getCameraId();
         if (mCameraId == -1) {
             Toast.makeText(getActivity(), "Camera not available", Toast.LENGTH_SHORT).show();
             return;
         }
         mCamera = getCameraInstance(mCameraId);
-        setupCameraSizes();
+        setupCamera();
         mCameraPreview = new CameraPreview(getActivity(), mCamera);
 
         mCameraRotation = getCameraRotation(getActivity(), mCameraId, mCamera);
@@ -110,20 +119,35 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         mHLView = new HighlightView(getActivity());
         mRelativeLayout.addView(mHLView);
 
-        mSquare[0] = mRelativeLayout.findViewById(R.id.v0);
-        mSquare[1] = mRelativeLayout.findViewById(R.id.v1);
-        mSquare[2] = mRelativeLayout.findViewById(R.id.v2);
-        mSquare[3] = mRelativeLayout.findViewById(R.id.v3);
-        mSquare[4] = mRelativeLayout.findViewById(R.id.v4);
-        mSquare[5] = mRelativeLayout.findViewById(R.id.v5);
-        mSquare[6] = mRelativeLayout.findViewById(R.id.v6);
-        mSquare[7] = mRelativeLayout.findViewById(R.id.v7);
-        mSquare[8] = mRelativeLayout.findViewById(R.id.v8);
+        int s = dpToPx(200) / MainActivity.SIZE;
+        LinearLayout cpw = (LinearLayout) mRelativeLayout.findViewById(R.id.colorPreviewWrapper);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
+        int margin = (int) 0.1 * s;
+        lp.setMargins(margin, margin, margin, margin);
+        for (int i = 0; i < MainActivity.SIZE; i++) {
+            LinearLayout l = new LinearLayout(getActivity());
+            l.setOrientation(LinearLayout.HORIZONTAL);
+            for (int j = 0; j < MainActivity.SIZE; j++) {
+                TextView tv = new TextView(getActivity());
+                tv.setTextSize(10);
+                tv.setLayoutParams(lp);
+                l.addView(tv);
+                mSquare[i][j] = tv;
+            }
+            cpw.addView(l);
+        }
     }
 
-    void setupCameraSizes() {
+    public int dpToPx(int dp) {
+        DisplayMetrics displayMetrics = getActivity().getResources().getDisplayMetrics();
+        int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
+        return px;
+    }
+
+    void setupCamera() {
         Log.d(TAG, "Capturing...");
         Camera.Parameters p = mCamera.getParameters();
+        p.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 
         p.setPictureFormat(ImageFormat.JPEG);
         int min = Integer.MAX_VALUE;
@@ -163,11 +187,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         mCamera.autoFocus(new Camera.AutoFocusCallback() {
             @Override
             public void onAutoFocus(boolean success, Camera camera) {
-                if (success) {
-                    mCamera.takePicture(null, null, CameraFragment.this);
-
-                }
-                else capture();
+                // Even if it's not focused, we should probably take the picture anyway
+                mCamera.takePicture(null, null, CameraFragment.this);
             }
         });
     }
@@ -195,47 +216,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
             src[i * 2 + 1] = (coord.y / (float) sh) * h;
         }
 
-        // This works (most of the time) but it's so ugly and long...
-//        // Bounding box around the trapezoid
-//        float[] bb = src.clone();
-//        // min x
-//        if (bb[0] < bb[6]) bb[6] = bb[0];
-//        else bb[0] = bb[6];
-//        // max x
-//        if (bb[2] > bb[4]) bb[4] = bb[2];
-//        else bb[2] = bb[4];
-//        // min y
-//        if (bb[1] < bb[3]) bb[3] = bb[1];
-//        else bb[1] = bb[3];
-//        // max y
-//        if (bb[5] > bb[7]) bb[7] = bb[5];
-//        else bb[5] = bb[7];
-//
-//        b = Bitmap.createBitmap(b,(int)bb[0],(int)bb[1],(int)(bb[2]-bb[0]),(int)(bb[7]-bb[1]));
-//
-//        // Map to bounding box coordinate space
-//        for (int i = 0; i < 4; i++) {
-//            src[2*i] -= bb[0];
-//            src[2*i+1] -= bb[1];
-//        }
-//        float[] tgt = src.clone();
-//        tgt[0] = tgt[6];
-//        tgt[2] = tgt[4];
-
-
-        /**
-         * FIXME: process outside main thread, reuse bitmap & canvas
-         * Convert the selected trapezoid into a square of size 100
-         * @see HighlightView#getCoords()
-         */
         Bitmap target = Bitmap.createBitmap(b.getWidth(), b.getHeight(), b.getConfig());
         int tw = target.getWidth();
         int th = target.getHeight();
 
         Canvas canvas = new Canvas(target);
-//        Paint paint = new Paint();
-//        paint.setShader(new BitmapShader(b, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-//        canvas.drawVertices(Canvas.VertexMode.TRIANGLE_STRIP, 8, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, src, 0, null, 0, null, 0, 0, paint);
         Matrix m = new Matrix();
         m.setPolyToPoly(src, 0, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, 4);
         canvas.drawBitmap(b, m, null);
@@ -244,28 +229,55 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         iv.setImageBitmap(target);
         mRelativeLayout.addView(iv);
 
-        Side side = getSideFromBitmap(target);
-        mButtonCapture.setBackgroundColor(side.m[0][0]);
-//
-//        mButtonCapture.setBackground(new BitmapDrawable(target));
+        Layer s = getSideFromBitmap(target);
+
     }
 
-    private Side getSideFromBitmap(Bitmap b) {
+
+    private Layer getSideFromBitmap(Bitmap b) {
         int size = MainActivity.SIZE;
         int dx = b.getWidth() / size;
         int dy = b.getHeight() / size;
         // Sticker margin
-        int sm = (int)(Math.min(dy,dx) * 0.2);
-        Side s = new Side(size);
+        int sm = (int) (Math.min(dy, dx) * 0.45);
+        Layer s = new Layer(size);
+        float[] hsv = new float[3];
+        float[] hsv00 = new float[3];
+        Color.colorToHSV(s.m[0][0], hsv);
+
+
+
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                Bitmap bm = Bitmap.createBitmap(b, i*dx+sm, j*dy+sm, dx-sm*2, dy-sm*2);
+                Bitmap bm = Bitmap.createBitmap(b, j * dx + sm, i * dy + sm, dx - sm * 2, dy - sm * 2);
                 s.m[i][j] = averageColor(bm);
 //                mSquare[j*size+i].setBackground(new BitmapDrawable(bm));
-                mSquare[j*size+i].setBackgroundColor(s.m[i][j]);
+                mSquare[i][j].setBackgroundColor(s.m[i][j]);
+                Color.colorToHSV(s.m[i][j], hsv);
+                StringBuilder sb = new StringBuilder();
+                // (errorH*candidateS/150)^2 + (errorS*0.7)^2 + (errorV*0.2)^2
+                double[] err = new double[] {
+                        Math.abs(hsv00[0]-hsv[0]),
+                        Math.abs(hsv00[1]-hsv[1]),
+                        Math.abs(hsv00[2]-hsv[2]),
+                };
+                double e = (err[0]*hsv[1]/150)*(err[0]*hsv[1]/150) + (err[1]*0.7)*(err[1]*0.7) + (err[2]*0.2)*(err[2]*0.2);
+
+                sb.append("H:").append((int) hsv[0]).append("\n");
+                sb.append("S:").append(round(hsv[1], 2)).append("\n");
+                sb.append("V:").append(round(hsv[2], 2)).append("\n");
+                sb.append("E:").append(e).append("\n");
+                mSquare[i][j].setText(sb.toString());
             }
         }
         return s;
+    }
+
+    // Round f to n decimal places
+    double round(double d, int n) {
+        int t = 1;
+        for (int i = 0; i < n; i++) t *= 10;
+        return (double) Math.round(d * t) / t;
     }
 
     public static Bitmap rotateBitmap(Bitmap source, float angle) {
@@ -308,7 +320,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
     }
 
     int doubleArrayToColor(double[] array) {
-        return Color.rgb((int)array[0],(int)array[1],(int)array[2]);
+        return Color.rgb((int) array[0], (int) array[1], (int) array[2]);
     }
 
     double[] average(Bitmap bm) {
@@ -336,7 +348,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         b = Math.sqrt(b / (double) s);
         return new double[]{r, g, b};
     }
+
     int averageColor(Bitmap b) {
         return doubleArrayToColor(average(b));
     }
+
 }
