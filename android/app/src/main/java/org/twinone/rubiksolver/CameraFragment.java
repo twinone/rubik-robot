@@ -241,35 +241,36 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         // Sticker margin
         int sm = (int) (Math.min(dy, dx) * 0.45);
         Layer s = new Layer(size);
-        float[] hsv = new float[3];
-        float[] hsv00 = new float[3];
-        Color.colorToHSV(s.m[0][0], hsv);
+        double[][][] points = new double[size][size][];
 
-
-
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                Bitmap bm = Bitmap.createBitmap(b, j * dx + sm, i * dy + sm, dx - sm * 2, dy - sm * 2);
-                s.m[i][j] = averageColor(bm);
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                Bitmap bm = Bitmap.createBitmap(b, x * dx + sm, y * dy + sm, dx - sm * 2, dy - sm * 2);
 //                mSquare[j*size+i].setBackground(new BitmapDrawable(bm));
-                mSquare[i][j].setBackgroundColor(s.m[i][j]);
-                Color.colorToHSV(s.m[i][j], hsv);
-                StringBuilder sb = new StringBuilder();
-                // (errorH*candidateS/150)^2 + (errorS*0.7)^2 + (errorV*0.2)^2
-                double[] err = new double[] {
-                        Math.abs(hsv00[0]-hsv[0]),
-                        Math.abs(hsv00[1]-hsv[1]),
-                        Math.abs(hsv00[2]-hsv[2]),
-                };
-                double e = (err[0]*hsv[1]/150)*(err[0]*hsv[1]/150) + (err[1]*0.7)*(err[1]*0.7) + (err[2]*0.2)*(err[2]*0.2);
+                int color = averageColor(bm);
+                s.m[y][x] = color;
 
-                sb.append("H:").append((int) hsv[0]).append("\n");
-                sb.append("S:").append(round(hsv[1], 2)).append("\n");
-                sb.append("V:").append(round(hsv[2], 2)).append("\n");
-                sb.append("E:").append(e).append("\n");
-                mSquare[i][j].setText(sb.toString());
+                // Translate color to point
+                double[] point = {Color.red(color), Color.green(color), Color.blue(color)};
+                for (int i = 0; i < 3; i++) point[i] = Math.pow(point[i] / 255.0, 2.2);
+                points[y][x] = point;
             }
         }
+
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                mSquare[y][x].setBackgroundColor(s.m[y][x]);
+
+                // Calculate distance between this and target point
+                double[] p1 = points[0][x];
+                double[] p2 = points[y][x];
+                double[] ds = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+                double error = Math.sqrt((ds[0] * ds[0] + ds[1] * ds[1] + ds[2] * ds[2]) / 3);
+
+                mSquare[y][x].setText(String.format("%.4f%%", error * 100));
+            }
+        }
+
         return s;
     }
 
