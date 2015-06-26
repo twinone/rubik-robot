@@ -63,6 +63,26 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         mButtonCapture.setOnClickListener(this);
 
         mFrameLayout = (FrameLayout) mRelativeLayout.findViewById(R.id.frame_layout);
+
+        // Setup squares at the top right corner
+        int s = dpToPx(200) / MainActivity.SIZE;
+        LinearLayout cpw = (LinearLayout) mRelativeLayout.findViewById(R.id.colorPreviewWrapper);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
+        int margin = (int) 0.1 * s;
+        lp.setMargins(margin, margin, margin, margin);
+        for (int i = 0; i < MainActivity.SIZE; i++) {
+            LinearLayout l = new LinearLayout(getActivity());
+            l.setOrientation(LinearLayout.HORIZONTAL);
+            for (int j = 0; j < MainActivity.SIZE; j++) {
+                TextView tv = new TextView(getActivity());
+                tv.setTextSize(10);
+                tv.setLayoutParams(lp);
+                l.addView(tv);
+                mSquare[i][j] = tv;
+            }
+            cpw.addView(l);
+        }
+
         return mRelativeLayout;
     }
 
@@ -119,23 +139,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ca
         mHLView = new HighlightView(getActivity());
         mRelativeLayout.addView(mHLView);
 
-        int s = dpToPx(200) / MainActivity.SIZE;
-        LinearLayout cpw = (LinearLayout) mRelativeLayout.findViewById(R.id.colorPreviewWrapper);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
-        int margin = (int) 0.1 * s;
-        lp.setMargins(margin, margin, margin, margin);
-        for (int i = 0; i < MainActivity.SIZE; i++) {
-            LinearLayout l = new LinearLayout(getActivity());
-            l.setOrientation(LinearLayout.HORIZONTAL);
-            for (int j = 0; j < MainActivity.SIZE; j++) {
-                TextView tv = new TextView(getActivity());
-                tv.setTextSize(10);
-                tv.setLayoutParams(lp);
-                l.addView(tv);
-                mSquare[i][j] = tv;
-            }
-            cpw.addView(l);
-        }
+
     }
 
     public int dpToPx(int dp) {
