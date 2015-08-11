@@ -32,5 +32,5 @@ void loop() {
     }
   }
   Servo::refresh();
-  delay(50);
+  delay(10);
 } 

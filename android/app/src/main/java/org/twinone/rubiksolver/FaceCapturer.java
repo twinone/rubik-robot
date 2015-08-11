@@ -123,7 +123,6 @@ public class FaceCapturer {
 
 
     public void capture(final int id, final Callback c) {
-        if (c == null) throw new IllegalStateException("Callback cannot be null");
 
         mCamera.autoFocus(new Camera.AutoFocusCallback() {
             @Override
