@@ -11,4 +11,4 @@ To accomplish our task we'll need:
 
 ## Web simulator
 
-There is a Rubik's Cube web simulator (WIP) at: http://twinone.github.io/rubik-solver/web
+There is a completely functional Rubik's Cube web simulator and solver at: http://twinone.github.io/rubik-solver/web
