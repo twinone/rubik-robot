@@ -1,10 +1,10 @@
-// Public variables
+use <buildvars.scad>
+use <util.scad>
 
 // global
 h1 = 2.5;
 horn_h = 1.5;
 horn_rl = 7/2; // horn large radius
-tolerance = 0.3;
 th = 1.2;
 
 // per arm
@@ -12,7 +12,6 @@ horn_c2c = 15.4; // center to center
 horn_rs = 3.5/2; // horn small radius
 
 
-screw_head_th = 2;
 screw_head_r = 5/2;
 min_screw_dst = screw_head_r + 10;
 
@@ -21,12 +20,11 @@ min_screw_dst = screw_head_r + 10;
 // screw
 screw_r = 3/2;
 screw_c2c = horn_c2c+th+horn_rl*2+horn_rs*2+screw_r*2;
-screw_tolerance = 0.2;
 screw_th = 3; // thickness of the screw holder wings
 
 
-
-t = tolerance;
+screw_tolerance = tolerance();
+t = tolerance();
 t2 = screw_tolerance;
 $fn=30;
 module 2d_horn(rs, rl, c2c) {
@@ -56,7 +54,7 @@ module screw_holder(dst, h) {
         }
         circle(r=horn_rl+th+t);
         translate([dst,0,0])
-        circle(r=screw_r+t);
+        screw_hole();
     }
 }
 
@@ -76,17 +74,29 @@ module main_enclosing() {
     }
 }
 
+function enclosing_dst_small() = max(screw_r+th+t + horn_rl+th+t, min_screw_dst);
+function enclosing_dst_large() = screw_r+th+t + horn_c2c+horn_rs+th+t;
+
 module screws() {
     //translate([-(screw_r+th+t + horn_rl+th+t),0,0])
     rotate([0,0,180])
-    screw_holder(max(screw_r+th+t + horn_rl+th+t, min_screw_dst), h1+horn_h);
+    screw_holder(enclosing_dst_small(), h1+horn_h);
 
     difference() {
-        screw_holder(screw_r+th+t + horn_c2c+horn_rs+th+t, h1+horn_h);
+        screw_holder(enclosing_dst_large(), h1+horn_h);
         outer_horn();
     }
 }
 
 
-main_enclosing();
-screws();
+module enclosing() {
+    main_enclosing();
+    screws();
+}
+enclosing();
+
+module enclosing_centered_holes() {
+    screw_hole();
+    translate([-enclosing_dst_small(),0,0]) screw_hole();
+    translate([enclosing_dst_large(),0,0]) screw_hole();
+}
