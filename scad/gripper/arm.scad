@@ -21,10 +21,11 @@ module arm(length, r=arm_width()/2, center = false) {
         translate([length,0,0]) screw_hole();
     }
 }
-
+start_angle = 40;
+angle = 120;
 module arm_left(height) {
     mirror([0,1,0]) {
-        gear(r=r, h=height, teeth=teeth, center_r = screw_r()+tolerance(), angle = 180);
+        gear(r=r, h=height, teeth=teeth, center_r = screw_r()+tolerance(), angle = angle, start_angle = start_angle);
         linear_extrude(height=height)
         arm(length=arm_length(), r = arm_width()/2);
     }
@@ -34,7 +35,7 @@ module arm_right(height) {
     difference() {
         union() {
             rotate([0,0,360/teeth/2]) // so they're aligned
-            gear(r=r, h=height, teeth=teeth, center_r = screw_r()+tolerance(), angle = 180);
+            gear(r=r, h=height, teeth=teeth, center_r = screw_r()+tolerance(), angle = angle, start_angle = start_angle);
             linear_extrude(height=height)
             arm(length=arm_length(), r = arm_width()/2);
         }
@@ -45,11 +46,13 @@ module arm_right(height) {
     }
 }
 
-module arms(height, center) {
+module arms(height, center, angle = 0) {
     move = center ? -arm_c2c()/2 : 0;
     translate([0,move,0]) {
         translate([0,arm_c2c(),0])
+        rotate([0,0,angle])
         arm_left(height);
+        rotate([0,0,-angle])
         arm_right(height);
     }
 }
