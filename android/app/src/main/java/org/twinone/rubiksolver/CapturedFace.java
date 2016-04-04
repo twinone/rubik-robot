@@ -21,4 +21,11 @@ public class CapturedFace {
         return Color.rgb((int) c[0], (int) c[1], (int) c[2]);
     }
 
+    public float[] getHSV(int i, int j) {
+        double[] c = m[i][j];
+
+        float hsv[] = new float[3];
+        Color.colorToHSV(getColor(i, j), hsv);
+        return hsv;
+    }
 }

@@ -1,9 +1,11 @@
 package org.twinone.rubiksolver;
 
 import android.app.Fragment;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,11 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by twinone on 6/20/15.
@@ -33,6 +40,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     private RelativeLayout mRootView;
     private CapturedFace[] mCapturedFaces = new CapturedFace[6];
     private TextView[][] mSquare = new TextView[MainActivity.SIZE][MainActivity.SIZE];
+    private int mCurrentCapturingFaceId = 0;
 
 
     @Nullable
@@ -97,20 +105,88 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.button_capture) {
-            mFaceCapturer.capture(0, this);
+            mFaceCapturer.capture(mCurrentCapturingFaceId, this);
         }
     }
 
     @Override
-    public void onFaceCaptured(int id, CapturedFace f) {
-        showColors(f);
+    public void onFaceCaptured(int id, CapturedFace face) {
+        if (mCurrentCapturingFaceId < 6) {
+            mCapturedFaces[mCurrentCapturingFaceId++] = face;
+            showColors(face);
+        }
+
+        if (mCurrentCapturingFaceId == 6) {
+            int colors[] = new int[face.size * face.size * 6];
+
+            int p = 0;
+            for (int i = 0; i < mCapturedFaces.length; i++) {
+                CapturedFace f = mCapturedFaces[i];
+                for (int j = 0; j < f.size; j++) {
+                    for (int k = 0; k < f.size; k++) {
+                        colors[p++] = f.getColor(j, k);
+                    }
+                }
+            }
+            for (int l = 0; l < 6; l++) {
+                Integer a[] = kNN(colors, l * 9 + 4, 6);
+                String x = "Face: " + l + " ";
+                for (int i : a) {
+                    x += " " + i;
+                }
+                Log.d(TAG, x);
+            }
+        }
     }
 
+    private static Integer[] kNN(int[] colors, int index, int k) {
+        class Pair {
+            int index;
+            double dst;
+        }
+        List<Pair> dsts = new ArrayList<>();
+        for (int j = 0; j < colors.length; j++) {
+            if (index == j) continue;
+            Pair p = new Pair();
+            p.dst = colorDistance(colors[j], colors[index]);
+            p.index = j;
+            dsts.add(p);
+        }
+
+        Collections.sort(dsts, new Comparator<Pair>() {
+            @Override
+            public int compare(Pair lhs, Pair rhs) {
+                double a = lhs.dst - rhs.dst;
+                if (a < 0) return -1;
+                if (a > 0) return 1;
+                return 0;
+            }
+        });
+        double fmd = dsts.get(7).dst;
+        double next = dsts.get(8).dst;
+        Log.d(TAG, "group max: "+fmd +", next: "+next + ", diff="+(next-fmd));
+        List<Integer> idx = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            idx.add(dsts.get(i).index);
+            int color = colors[dsts.get(i).index];
+            float hsv[] = new float[3];
+            Color.colorToHSV(color, hsv);
+            int xxx = idx.get(i);
+            if (xxx/9 != index / 9) {
+                // detected wrong face
+                Log.d(TAG, "  wrong face " + xxx + " " + dsts.get(i).dst + " (face " + xxx / 9 + "): #" + colorToHex(color) + ", hsv=" + hsv[0] + "," + hsv[1] + "," + hsv[2]);
+            }
+        }
+        Collections.sort(idx);
+        return idx.toArray(new Integer[idx.size()]);
+    }
+
+
     private void showColors(CapturedFace f) {
-        for (int j = 0; j < f.size; j++) {
-            double[] p1 = f.m[0][j].clone();
+        for (int i = 0; i < f.size; i++) {
+            double[] p1 = f.m[0][i].clone();
             applyGamma(p1);
-            for (int i = 0; i < f.size; i++) {
+            for (int j = 0; j < f.size; j++) {
                 mSquare[i][j].setBackgroundColor(f.getColor(i, j));
 
                 // Calculate distance between this and target point
@@ -120,13 +196,72 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 double[] ds = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
                 double error = Math.sqrt((ds[0] * ds[0] + ds[1] * ds[1] + ds[2] * ds[2]) / 3);
 
-                mSquare[i][j].setText(String.format("%.4f%%", error * 100));
+                int color = f.getColor(i, j);
+                float hsv[] = f.getHSV(i, j);
+
+                //mSquare[i][j].setText(String.format("%.4f%%", error * 100));
+                mSquare[i][j].setText("#" + colorToHex(color) + "\n" + "HSV:" + "\n" + hsv[0] + "\n" + hsv[1] + "\n" + hsv[2]);
+                mSquare[i][j].setTextColor(getContrastyColor(color));
+//                Log.d(TAG, "Sticker " + i + " " + j);
+//                Log.d(TAG, "RGB: " + Color.red(color) + " " + Color.green(color) + " " + Color.blue(color));
+//                Log.d(TAG, "HSV: " + hsv[0] + " " + hsv[1] + " " + hsv[2]);
 
             }
         }
     }
 
-    void applyGamma(double[] d) {
+    private int getContrastyColor(int color) {
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        if (r + g + b > 3 * 255 / 2) return 0xFF000000;
+        else if (true) return 0xFFFFFFFF;
+
+        float hsv[] = new float[3];
+        Color.colorToHSV(color, hsv);
+        hsv[0] = (hsv[0] + 180) % 360;
+        hsv[1] = 1.0f;
+        hsv[2] = 1.0f;
+        return Color.HSVToColor(hsv);
+    }
+
+    public static String colorToHex(int color) {
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        return String.format("%02X%02X%02X", r, g, b);
+    }
+
+    public static void applyGamma(double[] d) {
         for (int i = 0; i < d.length; i++) d[i] = Math.pow(d[i] / 255.0, COLOR_ERROR_GAMMA);
+    }
+
+    /**
+     * Returns the distance between two colors
+     */
+    // TODO test
+    public static double colorDistance(int a, int b) {
+        float[] hsva = new float[3];
+        Color.colorToHSV(a, hsva);
+        float[] hsvb = new float[3];
+        Color.colorToHSV(b, hsvb);
+
+        // hue angle difference
+        float angle = Math.abs(hsva[0] - hsvb[0]);
+        if (angle > 180) angle -= (angle - 180) * 2; // smallest path is maximum 180º
+
+        // divide by 180 because that's the maximum angle of the smallest path
+        float hue = angle / 180.f;
+        float sat = Math.abs(hsva[1] - hsvb[1]);
+        float val = Math.abs(hsva[2] - hsvb[2]);
+
+        float dst = 0;
+        dst += hue * sat;
+        dst += sat * sat;
+        dst += val * val;
+
+        return Math.sqrt(dst) / Math.sqrt(3);
     }
 }

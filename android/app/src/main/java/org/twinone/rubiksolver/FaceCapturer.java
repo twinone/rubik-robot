@@ -188,8 +188,8 @@ public class FaceCapturer {
         CapturedFace s = new CapturedFace(size);
 //        double[][][] points = new double[size][size][];
 
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
                 Bitmap bm = Bitmap.createBitmap(b, x * dx + sm, y * dy + sm, dx - sm * 2, dy - sm * 2);
                 s.m[y][x] = average(bm);
             }
