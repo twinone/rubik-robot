@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.ValueCallback;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -38,6 +39,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     private FaceCapturer mFaceCapturer;
     private Button mButtonCapture;
+    private WebCube mWebCube;
 
     private RelativeLayout mRootView;
     private CapturedFace[] mCapturedFaces = new CapturedFace[6];
@@ -57,6 +59,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mButtonCapture.setOnClickListener(this);
         mFaceCapturer = new FaceCapturer(this);
 //        mFrameLayout = (FrameLayout) mRootView.findViewById(R.id.frame_layout);
+        mWebCube = new WebCube(this.getActivity());
+        //mRootView.addView(mWebCube);
         return mRootView;
     }
 
@@ -130,14 +134,20 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                     }
                 }
             }
+            char[] state = new char[6 * 9];
             for (int l = 0; l < 6; l++) {
-                Integer a[] = kNN(colors, l * 9 + 4, 6);
-                String x = "Face: " + l + " ";
-                for (int i : a) {
-                    x += " " + i;
-                }
-                Log.d(TAG, x);
+                List<Integer> a = kNN(colors, l * 9 + 4, 6);
+                a.add(l * 9 + 4);
+                for (int piece : a)
+                    state[piece] = "ULFRBD".charAt(l);
             }
+            Log.d(TAG, "State: https://twinone.github.io/rubik-solver/web/?state="+String.valueOf(state));
+            mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                    Log.d(TAG, "Solve: "+value);
+                }
+            });
         }
     }
 
