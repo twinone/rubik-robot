@@ -65,7 +65,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         int s = dpToPx(200) / MainActivity.SIZE;
         LinearLayout cpw = (LinearLayout) getRootView().findViewById(R.id.colorPreviewWrapper);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
-        int margin = (int) 0.1 * s;
+        int margin = (int) (0.1 * s);
         lp.setMargins(margin, margin, margin, margin);
         for (int i = 0; i < MainActivity.SIZE; i++) {
             LinearLayout l = new LinearLayout(getActivity());
@@ -141,7 +141,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         }
     }
 
-    private static Integer[] kNN(int[] colors, int index, int k) {
+    private static List<Integer> kNN(int[] colors, int index, int k) {
         class Pair {
             int index;
             double dst;
@@ -158,31 +158,19 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         Collections.sort(dsts, new Comparator<Pair>() {
             @Override
             public int compare(Pair lhs, Pair rhs) {
-                double a = lhs.dst - rhs.dst;
-                if (a < 0) return -1;
-                if (a > 0) return 1;
-                return 0;
+                return (int) Math.signum(lhs.dst - rhs.dst);
             }
         });
-        double fmd = dsts.get(7).dst;
-        double next = dsts.get(8).dst;
-        Log.d(TAG, "group max: "+fmd +", next: "+next + ", diff="+(next-fmd));
-        List<Integer> idx = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            idx.add(dsts.get(i).index);
-            int color = colors[dsts.get(i).index];
-            float hsv[] = new float[3];
-            Color.colorToHSV(color, hsv);
-            int xxx = idx.get(i);
-            if (xxx/9 != index / 9) {
-                // detected wrong face
-                Log.d(TAG, "  wrong face " + xxx + " " + dsts.get(i).dst + " (face " + xxx / 9 + "): #" + colorToHex(color) + ", hsv=" + hsv[0] + "," + hsv[1] + "," + hsv[2]);
-            }
-        }
-        Collections.sort(idx);
-        return idx.toArray(new Integer[idx.size()]);
-    }
+        //double fmd = dsts.get(7).dst;
+        //double next = dsts.get(8).dst;
+        //Log.d(TAG, "group max: "+fmd +", next: "+next + ", diff="+(next-fmd));
 
+        List<Integer> idx = new ArrayList<>();
+        for (int i = 0; i < 8; i++)
+            idx.add(dsts.get(i).index);
+        Collections.sort(idx);
+        return idx;
+    }
 
     private void showColors(CapturedFace f) {
         for (int i = 0; i < f.size; i++) {
