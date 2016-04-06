@@ -14,6 +14,8 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.twinone.rubiksolver.util.ColorUtil;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -241,27 +243,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     /**
      * Returns the distance between two colors
      */
-    // TODO test
     public static double colorDistance(int a, int b) {
-        float[] hsva = new float[3];
-        Color.colorToHSV(a, hsva);
-        float[] hsvb = new float[3];
-        Color.colorToHSV(b, hsvb);
-
-        // hue angle difference
-        float angle = Math.abs(hsva[0] - hsvb[0]);
-        if (angle > 180) angle -= (angle - 180) * 2; // smallest path is maximum 180º
-
-        // divide by 180 because that's the maximum angle of the smallest path
-        float hue = angle / 180.f;
-        float sat = Math.abs(hsva[1] - hsvb[1]);
-        float val = Math.abs(hsva[2] - hsvb[2]);
-
-        float dst = 0;
-        dst += hue * sat;
-        dst += sat * sat;
-        dst += val * val;
-
-        return Math.sqrt(dst) / Math.sqrt(3);
+        // see http://stackoverflow.com/a/26998429
+        double[] lab1 = ColorUtil.ColorToLAB(a);
+        double[] lab2 = ColorUtil.ColorToLAB(b);
+        return Math.sqrt(Math.pow(lab2[0] - lab1[0], 2) + Math.pow(lab2[1] - lab1[1], 2) + Math.pow(lab2[2] - lab1[2], 2));
     }
 }
