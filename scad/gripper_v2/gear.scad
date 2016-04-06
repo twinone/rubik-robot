@@ -7,11 +7,11 @@ module 2d_gear(r, teeth, angle, start_angle) {
     }
 }
 
-module gear(r, h, teeth, center_r = 0, angle = 360, start_angle = 0) {
+module gear(r, h, teeth, center_r = 0, angle = 360, start_angle = 0, teeth_h = 1) {
     linear_extrude(height=h)
     difference() {
         2d_gear(r=r, teeth=teeth, angle=angle, start_angle=start_angle) {
-            scale([2,1,1] * r*1.5 / 10)
+            scale([2,1,1] * r*1.5 / 10*teeth_h)
             translate([-0.1,1.5,0])
             rotate([0,0,-90])
             polygon([

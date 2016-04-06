@@ -1,45 +1,240 @@
-use <buildvars.scad>
-use <gripper/gear.scad>
-use <gripper/screw.scad>
+use <scad-utils/morphology.scad>
+use <gripper_v2/gripper.scad>
+use <gripper_v2/buildvars.scad>
+use <gripper_v2/gear.scad>
+use <gripper_v2/servo.scad>
+use <gripper_v2/servo_horn_enclosing.scad>
+use <gripper_v2/arm.scad>
 
-cube_spacing = 3;
 
-module rotating_ring() {
-    
-    w = cube_width();
-    r = sqrt(w*w*2)/2 * 1.5;
-    h = 10;
-    
-    module bearing() {
-        bh = h/4;
+
+function holder_h() = 80; // height to center
+function holder_d() = turn_h();
+function gripper_r() = turn_r();
+function holder_th() = 8;
+function holder_w() = gripper_r()*2+holder_th()*2;
+function turn_gear_f() = 3;
+function gears_c2c() = (turn_gear_f()+1)*turn_gear_r()+2;
+function sh_r() = 8/2;
+function sh_h() = 3;
+function sh_w() = (sh_h()+2)*2;
+
+tgt = 90;
+angle = $t < 0.5 ? $t*2*tgt : tgt-($t-0.5)*2*tgt;
+
+module screw_head_padding(h = sh_h()) {
+    w = sh_w();
+    r = sh_r();
+    difference() {
+        translate([0,0,h])
+        cube([w,w,h*2],center=true);
+        
+        cylinder(r=r, h=h*2);
+    }
+}
+module screw_holder(h) {
+    w = sh_w();
+    r = screw_r()+tolerance();
+    difference() {
+        translate([0,0,h/2])
+        cube([w,w,h],center=true);
+        
+        cylinder(r=r, h=h);
+    }
+}
+
+module screw(h=4, hh=3) {
+    translate([sh_w()/2,sh_w()/2,0]) {
+        translate([0,0,hh])
+        screw_holder(h=h);
+        screw_head_padding(h=hh);
+    }
+}
+
+module screwy(h,hh) {
+    translate([0,0,sh_w()])
+    rotate([-90,0,0])
+    screw(h=h, hh=hh);
+}
+
+
+
+module 2screws(h,hh) {
+    screwy(h,hh);
+    translate([0,0,holder_d()-sh_w()])
+    screwy(h,hh);
+}
+
+module 4screws(h=sh_h(),hh=3) {
+    translate([-sh_w(),0,0])2screws(h,hh);
+    translate([holder_w(),0,0]) 2screws(h,hh);
+}
+
+
+module holder_bottom() {
+    th = holder_th();
+    r = gripper_r() + tolerance()*4;
+    w = holder_w();
+    h = holder_h();
+    bth = th;
+    // inner radius
+    module shape(r=r, eh) {
+        ir = gripper_r()+tolerance();
+        linear_extrude(height=eh)
+        shell(d=-th)
         difference() {
-            cylinder(r=r*0.9,h=bh);
-            cylinder(r=r*0.9-3,h=bh);
+            polygon([
+                [0,0],
+                [0,bth],
+                [w/2-ir-th,h],
+                [w/2+ir+th,h],
+                [w,bth],
+                [w,0],
+            ]);
+            translate([w/2,h])
+            circle(r=r);
         }
     }
-    
-    
-    difference() {
-        gear(r=r, teeth=20, h=h);
+    module base() {
+        total_w = holder_d();
+        esw = (total_w-5)/2;
+        pad=1.5;
         
-        cube([w+cube_spacing,w+cube_spacing,h*3], center=true);
-        bearing();
-    }    
-}
-
-module rotating_base() {
-    w = cube_width();
-    h = cube_width() / 4;
-    t = cube_holder_padding();
-    th = 4 +t;
-    outer_cube_w = w + th*2;
-    translate(outer_cube_w/2*[-1,-1,0])
-    difference() {
-        cube([outer_cube_w,outer_cube_w,h+th]);
-        translate([0-t,th-t,th-t])
-        cube([w+th+t*2,w+t*2,h+t*2]);
+        m1 = esw+pad/2;
+        m2 = esw+5-pad/2;
+        shape(r, eh=m1);
+        translate([0,0,m1])
+        shape(r-1.5,eh=m2-m1);
+        translate([0,0,m2])
+        shape(r, eh=total_w-m2);
     }
     
+    base();   
+    
+    4screws(hh=3);
+    translate([0,holder_h(),0])
+    mirror([0,1,0])
+    4screws(hh=0);
 }
 
-rotating_base();
+module holder_top() {
+    th = holder_th();
+    r = gripper_r() + tolerance()*4;
+    w = holder_w();
+    h = r+th;
+    bth = th;
+    // inner radius
+    module shape(r=r, eh) {
+        sqh = sh_h();
+        ir = gripper_r()+tolerance();
+        linear_extrude(height=eh)
+        shell(d=-th)
+        
+        intersection() {
+            union() {
+                translate([w/2,w/2])
+                circle(r=w/2);
+                
+                translate([0,h-sqh])
+                square([w,sqh]);
+            }
+            difference() {
+                polygon([
+                    [0,0],
+                    [0,bth],
+                    [w/2-ir-th,h],
+                    [w/2+ir+th,h],
+                    [w,bth],
+                    [w,0],
+                ]);
+                translate([w/2,h])
+                circle(r=r);
+            }
+        }
+    }
+    module base() {
+        total_w = holder_d();
+        esw = (total_w-5)/2;
+        pad=1.5;
+        
+        m1 = esw+pad/2;
+        m2 = esw+5-pad/2;
+        difference() {
+            shape(r, eh=m1);
+            translate([w/2,h-gears_c2c(),-1])
+            cylinder(r=enclosing_dst_small()+5,h=servo_base_height()+1);
+        }
+        
+        translate([0,0,m1])
+        shape(r-1.5,eh=m2-m1);
+        translate([0,0,m2])
+        shape(r, eh=total_w-m2);
+          
+            
+    }
+    
+    
+    module holder(n) {
+        translate([w/2,-gears_c2c()+h,servo_base_height()*n])
+        rotate(90)
+        servo_support(w=3,ext=3);
+    }
+    
+    cw = servo_d();
+    color("purple")
+    translate([holder_d(),0,holder_h()+h])
+    rotate([-90,0,90]){
+        difference() {
+            base();
+            translate([w/2-cw/2,h-gears_c2c()+servo_short(),0])
+            cube([cw,servo_flap(),holder_d()+100]);
+        }
+        translate([0,h,0])
+        mirror([0,1,0])
+        4screws(hh=0);
+        
+        holder(1);
+        holder(2);
+    }
+}
+
+
+module display() {
+    color("green")
+    translate([0,holder_w()/2,holder_h()])
+    mirror()
+    rotate([-angle*turn_gear_f(),0,0])
+    display_turner();
+
+    translate([holder_d(),holder_w()/2,holder_h()+gears_c2c()]) {
+        rotate([angle,0,0])
+        rotate([0,90,0]) {
+            linear_extrude(height=4) {
+                rotate([0,0,-90])
+                arm(length=enclosing_dst_large(), r=arm_width()/2);
+                rotate([0,0,90])
+                arm(length=enclosing_dst_small(), r=arm_width()/2);
+            }
+            rotate(360/30/2)
+            gear(r=turn_gear_r()*turn_gear_f(), teeth=15*turn_gear_f(), h = 4,teeth_h=1/turn_gear_f());
+        }
+        translate([-12,0,0])
+        rotate([-90,90,-90]) {
+            servo();
+            translate([0,0,servo_elevation()+servo_base_height()])
+            rotate([0,0,-90+angle])
+            enclosing();
+        }
+    }
+
+    rotate([90,0,90])
+    holder_bottom();
+}
+
+module print() {
+    $fn=80;
+    //holder_bottom();
+    holder_top();
+}
+
+print();

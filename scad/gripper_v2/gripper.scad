@@ -10,10 +10,17 @@ function back_x() = 4.31*2;
 function back_y() = -gear_r()-10;
 function base_rounding_radius() = 7;
 function nut_h() = 2.3;
+
 function back_h() = nut_h()+servo_elevation()+2*servo_base_height();
-function turn_h() = 25;
+function turn_r() = back_h()/2;
+function turn_h() = 30;
 function turn_gap_h() = 5;
 function turn_gap_d() = 2;
+function turn_br() = base_rounding_radius();
+function turn_sr() = turn_br()/2;
+function turn_mr() = (turn_br()+turn_sr())/2;
+function turn_pad() = 2;
+function turn_gear_r() = 6;
 
 module dup(vec=[0,1,0]) {
     children();
@@ -106,8 +113,11 @@ module pusher() {
     arm();
 }
 module pusher_big() {
-    linear_extrude(height=servo_elevation()+servo_base_height())
+    translate([0,0,2])
+    linear_extrude(height=servo_elevation()+servo_base_height()-2)
     arm(r=gear_r()/3*2);
+    linear_extrude(height=2)
+    arm(r=arm_width()/2);    
 }
 
 
@@ -119,6 +129,51 @@ OUTPUTS
 
 
 */
+
+
+module turner() {
+    
+    sr = turn_sr();
+    br = turn_br();
+    mr = turn_mr();
+    h = back_h();
+    
+    turner_height = 10;
+    linear_extrude(height=h)
+    difference() {
+        hull()
+        dup()
+        translate([-(br+sr)/2+sr,back_x()/2,0])
+        circle(r=mr);
+
+        dup()
+        translate([0, back_x()/2,0])
+        circle(r=screw_r()); // without tolerance for better grip
+    }
+    
+    gap_h = turn_gap_h();
+    gap_d = turn_gap_d();
+    pad = turn_pad();
+    translate([-br+sr-pad,0,h/2])
+    rotate([0,-90,0]) {
+        difference() {
+            cylinder(r=h/2, h=turn_h()+sr);
+            translate([0,0,sr+(turn_h())/2-gap_h/2])
+            difference() {
+                cylinder(h=gap_h, r=h/2+1);
+                cylinder(h=gap_h, r=h/2-gap_d);
+            }
+        }
+        translate([0,0,turn_h()+sr])
+        gear(r=turn_gear_r(), teeth=15, h = 4);
+    }
+}
+
+module display_turner() {
+    translate([turn_br()+turn_pad(),0,-turn_r()]) turner();
+}
+
+!display_turner();
 
 
 module display_gripper() {
@@ -146,46 +201,10 @@ module display_gripper() {
         pusher_big();
     }
     
+    translate([back_y(),0,servo_base_height()])
     turner();
 }
 
-module turner() {
-    sr = base_rounding_radius()/2;
-    br = base_rounding_radius();
-    mr = (br+sr)/2;
-    h = back_h();
-    
-    turner_height = 10;
-    translate([back_y(),0,servo_base_height()]) {
-        linear_extrude(height=h)
-        difference() {
-            hull()
-            dup()
-            translate([-(br+sr)/2+sr,back_x()/2,0])
-            circle(r=mr);
-
-            dup()
-            translate([0, back_x()/2,0])
-            circle(r=screw_r());
-        }
-        
-        gap_h = turn_gap_h();
-        gap_d = turn_gap_d();
-        translate([-br+sr,0,h/2])
-        rotate([0,-90,0]) {
-            difference() {
-                cylinder(r=h/2, h=turn_h()+sr);
-                translate([0,0,sr+(turn_h())/2-gap_h/2])
-                difference() {
-                    cylinder(h=gap_h, r=h/2+1);
-                    cylinder(h=gap_h, r=h/2-gap_d);
-                }
-            }
-            translate([0,0,turn_h()+sr])
-            gear(r=6, teeth=15, h = 4);
-        }
-    }
-}
 
 // to print:
 module print() {
@@ -205,12 +224,12 @@ module print() {
     
     pusher_big();
     
-    !turner();
+    turner();
 
 }
 
 
-//display_gripper();
+display_gripper();
 
 //translate([-150,0,0])
-print();
+//print();

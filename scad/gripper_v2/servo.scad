@@ -5,17 +5,24 @@ function servo_d() = 12;
 function servo_h() = 22;
 function servo_w2() = 32;
 function servo_r() = servo_d()/2;
+function servo_flap() = 4.5;
 
-module servo_support() {
+function servo_short() = servo_r();
+function servo_long() = servo_w()-servo_short();
+function servo_short2() = servo_short()+servo_flap();
+function servo_long2() = servo_long()+servo_flap();
+
+module servo_support(w = 0, ext=0) {
     h = 4;
     d = servo_w2() - servo_w();
     translate([-servo_w()+servo_r()-d/2,-servo_d()/2,0])
     //cube([servo_w(),servo_d(),servo_h()]);
     difference() {
-        cube([servo_w2(),servo_d(),h]);
+        translate([0,-w-tolerance(),0])
+        cube([servo_w2()+ext,servo_d()+w*2+tolerance()*2,h]);
         translate([(servo_w2()-servo_w())/2,0,0])
-        translate([-tolerance(),0,0])
-        cube([servo_w()+tolerance()*2,servo_d(),h]);
+        translate([-tolerance(),-tolerance(),0])
+        cube([servo_w()+tolerance()*2,servo_d()+tolerance()*2,h]);
         translate([2,servo_d()/2,0]) cylinder(h=9,r=1,center=true);
         translate([servo_w2()-2,servo_d()/2,0]) cylinder(h=9,r=1,center=true);
     }
