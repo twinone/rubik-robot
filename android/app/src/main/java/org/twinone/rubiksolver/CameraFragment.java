@@ -15,6 +15,9 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.twinone.rubiksolver.model.AlgorithmMove;
+import org.twinone.rubiksolver.model.RobotOperation;
+import org.twinone.rubiksolver.model.RobotState;
 import org.twinone.rubiksolver.util.ColorUtil;
 
 import java.util.ArrayList;
@@ -151,7 +154,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
                 @Override
                 public void onReceiveValue(String value) {
-                    Log.d(TAG, "Solve: "+value);
+                    String alg = value.substring(1,value.length()-1); //FIXME: crappy
+                    Log.d(TAG, "Solve: "+alg);
+                    List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
+                    List<RobotOperation> ops = RobotState.translateInAVerySimpleButHopefullyFunctionalWay(moves);
+                    Log.d(TAG, "Translated into "+ops.size()+" servo operations.");
                 }
             });
         }
