@@ -141,6 +141,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 for (int piece : a)
                     state[piece] = "ULFRBD".charAt(l);
             }
+            boolean invalidState = false;
+            for (char piece : state) if (piece == 0) invalidState = true;
+            if (invalidState) {
+                Log.e(TAG, "Invalid state, scanning didn't work out well.");
+                return;
+            }
             Log.d(TAG, "State: https://twinone.github.io/rubik-solver/web/?state="+String.valueOf(state));
             mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
                 @Override
