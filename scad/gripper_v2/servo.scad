@@ -5,8 +5,7 @@ function servo_d() = 12;
 function servo_h() = 22;
 function servo_w2() = 32;
 function servo_r() = servo_d()/2;
-function servo_flap() = 4.5;
-
+function servo_flap() = (servo_w2() -servo_w()) /2;
 function servo_short() = servo_r();
 function servo_long() = servo_w()-servo_short();
 function servo_short2() = servo_short()+servo_flap();

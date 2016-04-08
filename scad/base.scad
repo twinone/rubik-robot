@@ -13,15 +13,23 @@ function holder_d() = turn_h();
 function gripper_r() = turn_r();
 function holder_th() = 8;
 function holder_w() = gripper_r()*2+holder_th()*2;
-function turn_gear_f() = 3;
-function gears_c2c() = (turn_gear_f()+1)*turn_gear_r()+2;
+
+function gears_c2c() = 20;
+function gear_conversion_factor() = 1.3;
+
+function base_r() = (gears_c2c()-2)/2;
+function servo_gear_f() = 2/(gear_conversion_factor()+1)*gear_conversion_factor();
+function turn_gear_f() = 2-servo_gear_f();
+function turn_gear_r() = base_r() * turn_gear_f();
+function servo_gear_r() = base_r() * servo_gear_f();
+
 function sh_r() = 8/2;
 function sh_h() = 3;
 function sh_w() = (sh_h()+2)*2;
-
+echo((turn_gear_f()+1)*turn_gear_r()+2);
 tgt = 90;
 angle = $t < 0.5 ? $t*2*tgt : tgt-($t-0.5)*2*tgt;
-
+angle=-25+180;
 module screw_head_padding(h = sh_h()) {
     w = sh_w();
     r = sh_r();
@@ -161,23 +169,21 @@ module holder_top() {
         m2 = esw+5-pad/2;
         difference() {
             shape(r, eh=m1);
-            translate([w/2,h-gears_c2c(),-1])
-            cylinder(r=enclosing_dst_small()+5,h=servo_base_height()+1);
+//            translate([w/2,h-gears_c2c(),-1])
+//            cylinder(r=enclosing_dst_small()+5,h=servo_base_height()+1);
         }
         
         translate([0,0,m1])
         shape(r-1.5,eh=m2-m1);
         translate([0,0,m2])
-        shape(r, eh=total_w-m2);
-          
-            
+        shape(r, eh=total_w-m2);       
     }
     
-    
+    sw=3;
     module holder(n) {
-        translate([w/2,-gears_c2c()+h,servo_base_height()*n])
-        rotate(90)
-        servo_support(w=3,ext=3);
+        translate([w/2,-gears_c2c()+h,-servo_base_height()*(n+-2)+servo_elevation()-1])
+        rotate(0)
+        servo_support(w=sw);
     }
     
     cw = servo_d();
@@ -186,18 +192,52 @@ module holder_top() {
     rotate([-90,0,90]){
         difference() {
             base();
-            translate([w/2-cw/2,h-gears_c2c()+servo_short(),0])
-            cube([cw,servo_flap(),holder_d()+100]);
+            // vertical
+//            translate([w/2-cw/2,h-gears_c2c()-servo_long2(),0])
+//            cube([cw,servo_w2()+tolerance()*6,holder_d()+100]);
+            // horizontal
+            translate([w/2-servo_long2(),h-gears_c2c()-servo_r()-tolerance(),0])
+            cube([servo_w2(),servo_d()+tolerance()*2,holder_d()+100]);
         }
         translate([0,h,0])
         mirror([0,1,0])
         4screws(hh=0);
         
-        holder(1);
+        holder(3);
         holder(2);
     }
 }
 
+servo_gear_angle = 70;
+module servo_gear() {
+    rotate([angle+90,0,0])
+    rotate([0,90,0]) {
+        //enclosing_remove_screws(a1=0,a2=servo_gear_angle,h=50) {
+//            linear_extrude(height=4) {
+//                rotate([0,0,0])
+//                arm(length=enclosing_dst_large(), r=arm_width()/2);
+//                rotate([0,0,0+servo_gear_angle])
+//                arm(length=enclosing_dst_small(), r=arm_width()/2);
+//            }
+            rotate(360/30/2)
+            remove_servo_horn(horns=[true,false,true,false])
+            gear(r=servo_gear_r(), teeth=15*servo_gear_f(), h = 4,teeth_h=1/servo_gear_f());
+        //}
+
+    }
+}
+
+servo_gear_angle = 70;
+module turner_gear() {
+    //rotate([0,90,0])
+    rotate(360/30/2)
+    difference() {
+        gear(r=turn_gear_r(), teeth=15*turn_gear_f(), h = 4,teeth_h=1/turn_gear_f());
+        turner_screws(10);
+    }
+}
+
+!turner_gear();
 
 module display() {
     color("green")
@@ -207,34 +247,33 @@ module display() {
     display_turner();
 
     translate([holder_d(),holder_w()/2,holder_h()+gears_c2c()]) {
-        rotate([angle,0,0])
-        rotate([0,90,0]) {
-            linear_extrude(height=4) {
-                rotate([0,0,-90])
-                arm(length=enclosing_dst_large(), r=arm_width()/2);
-                rotate([0,0,90])
-                arm(length=enclosing_dst_small(), r=arm_width()/2);
-            }
-            rotate(360/30/2)
-            gear(r=turn_gear_r()*turn_gear_f(), teeth=15*turn_gear_f(), h = 4,teeth_h=1/turn_gear_f());
-        }
-        translate([-12,0,0])
-        rotate([-90,90,-90]) {
+        servo_gear();
+        translate([-servo_elevation()-servo_base_height()*1+1,0,0])
+        rotate([-90,180,-90]) {
             servo();
-            translate([0,0,servo_elevation()+servo_base_height()])
-            rotate([0,0,-90+angle])
-            enclosing();
+//            translate([0,0,servo_elevation()+servo_base_height()])
+//            rotate([0,0,90+180+angle])
+//            enclosing(a2=servo_gear_angle);
         }
     }
 
     rotate([90,0,90])
     holder_bottom();
+    holder_top();
 }
 
 module print() {
     $fn=80;
-    //holder_bottom();
+    holder_bottom();
     holder_top();
-}
+    
+    
+    translate(){
+        rotate([0,-90,0])
+        servo_gear();
+    }
+    turner_gear();
 
-print();
+}
+display();
+//print();
