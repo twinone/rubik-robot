@@ -5,11 +5,13 @@ use <util.scad>
 h1 = 2.5;
 horn_h = 1.5;
 horn_rl = 7/2; // horn large radius
+horn_rm = 5.65/2;
+horn_dm = 2.65;
 th = 1.2;
 
 // per arm
 horn_c2c = 15.4; // center to center
-horn_rs = 3.5/2; // horn small radius
+horn_rs = 3.8/2; // horn small radius
 
 
 screw_head_r = 5/2;
@@ -28,11 +30,10 @@ t = tolerance();
 t2 = screw_tolerance;
 $fn=30;
 module 2d_horn(rs, rl, c2c) {
+    circle(r=rl);
     hull() {
-        circle(r=rl);
-        translate([c2c,0,0]) {
-            circle(r=rs);
-        }
+        translate([horn_dm,0,0]) circle(r=horn_rm);
+        translate([c2c,0,0]) circle(r=rs);
     }
 }
 

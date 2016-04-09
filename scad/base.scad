@@ -15,7 +15,8 @@ function holder_th() = 8;
 function holder_w() = gripper_r()*2+holder_th()*2;
 
 function gears_c2c() = 20;
-function gear_conversion_factor() = 1.3;
+function gear_conversion_factor() = 0.67;
+function gear_round() = true;
 
 function base_r() = (gears_c2c()-2)/2;
 function servo_gear_f() = 2/(gear_conversion_factor()+1)*gear_conversion_factor();
@@ -26,7 +27,7 @@ function servo_gear_r() = base_r() * servo_gear_f();
 function sh_r() = 8/2;
 function sh_h() = 3;
 function sh_w() = (sh_h()+2)*2;
-echo((turn_gear_f()+1)*turn_gear_r()+2);
+
 tgt = 90;
 angle = $t < 0.5 ? $t*2*tgt : tgt-($t-0.5)*2*tgt;
 angle=-25+180;
@@ -221,7 +222,7 @@ module servo_gear() {
 //            }
             rotate(360/30/2)
             remove_servo_horn(horns=[true,false,true,false])
-            gear(r=servo_gear_r(), teeth=15*servo_gear_f(), h = 4,teeth_h=1/servo_gear_f());
+            gear(r=servo_gear_r(), teeth=15*servo_gear_f(), h = 4,teeth_h=1/servo_gear_f(),round=gear_round());
         //}
 
     }
@@ -232,12 +233,11 @@ module turner_gear() {
     //rotate([0,90,0])
     rotate(360/30/2)
     difference() {
-        gear(r=turn_gear_r(), teeth=15*turn_gear_f(), h = 4,teeth_h=1/turn_gear_f());
+        gear(r=turn_gear_r(), teeth=15*turn_gear_f(), h = 4,teeth_h=1/turn_gear_f(),round=gear_round());
         turner_screws(10);
     }
 }
 
-!turner_gear();
 
 module display() {
     color("green")
@@ -260,6 +260,11 @@ module display() {
     rotate([90,0,90])
     holder_bottom();
     holder_top();
+    
+    color("green")
+    translate([holder_d(), holder_w()/2, holder_h()])
+    rotate([0,90,0])
+    turner_gear();
 }
 
 module print() {
@@ -268,11 +273,13 @@ module print() {
     holder_top();
     
     
-    translate(){
+    union(){
+    !    translate([25,0,0])
         rotate([0,-90,0])
         servo_gear();
+        
+        turner_gear();
     }
-    turner_gear();
 
 }
 display();
