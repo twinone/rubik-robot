@@ -245,11 +245,18 @@ module turner_gear() {
 
 
 module display() {
-    color("green")
     translate([0,holder_w()/2,holder_h()])
     mirror()
-    rotate([-angle*turn_gear_f(),0,0])
-    display_turner();
+    
+    // full gripper
+    rotate([90,0,0])
+    translate([back_y(),0,servo_base_height()]*-1)
+    translate([turn_br()+turn_pad(),0,-turn_r()])
+    display_gripper();
+
+    // only turner
+    // rotate([-angle*turn_gear_f(),0,0])
+    // display_turner();
 
     translate([holder_d(),holder_w()/2,holder_h()+gears_c2c()]) {
         servo_gear();
@@ -279,6 +286,8 @@ module display4() {
             translate([holder_dst()/2,-holder_w()/2,0])
             display();
             foot();
+            translate([0,0,holder_h()-sh_h()])
+            %foot();
         }
     }
 }
