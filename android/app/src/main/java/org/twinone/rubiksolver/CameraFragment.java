@@ -16,8 +16,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import org.twinone.rubiksolver.model.AlgorithmMove;
-import org.twinone.rubiksolver.model.RobotOperation;
-import org.twinone.rubiksolver.model.RobotState;
+import org.twinone.rubiksolver.model.SimpleRobotMapper;
+import org.twinone.rubiksolver.model.comm.DelayRequest;
+import org.twinone.rubiksolver.model.comm.Request;
 import org.twinone.rubiksolver.util.ColorUtil;
 
 import java.util.ArrayList;
@@ -154,11 +155,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
                 @Override
                 public void onReceiveValue(String value) {
+                    if (value.equals("null")) {
+                        Log.e(TAG, "Unsolvable state, or scanning failed.");
+                        return;
+                    }
+
                     String alg = value.substring(1,value.length()-1); //FIXME: crappy
-                    Log.d(TAG, "Solve: "+alg);
-                    List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
-                    List<RobotOperation> ops = RobotState.translateInAVerySimpleButHopefullyFunctionalWay(moves);
-                    Log.d(TAG, "Translated into "+ops.size()+" servo operations.");
+                    handleAlgorithm(alg);
                 }
             });
         }
@@ -260,4 +263,27 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         double[] lab2 = ColorUtil.ColorToLAB(b);
         return Math.sqrt(Math.pow(lab2[0] - lab1[0], 2) + Math.pow(lab2[1] - lab1[1], 2) + Math.pow(lab2[2] - lab1[2], 2));
     }
+
+    public void handleAlgorithm(String alg) {
+        List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
+        Log.d(TAG, "Solve (" + moves.size() + "): "+alg);
+
+        List<AlgorithmMove> preMappedMoves = new ArrayList<>();
+        for (AlgorithmMove move : moves)
+            Collections.addAll(preMappedMoves, SimpleRobotMapper.preMap(move));
+        Log.d(TAG, "Pre-mapped moves (" + preMappedMoves.size() + "): "+AlgorithmMove.format(preMappedMoves));
+
+        SimpleRobotMapper mapper = new SimpleRobotMapper();
+        List<Request> requests = mapper.map(moves);
+        int time = 0, delays = 0;
+        for (Request request : requests) {
+            if (request instanceof DelayRequest) {
+                time += ((DelayRequest) request).getDelay();
+                delays++;
+            }
+        }
+        time /= 1000;
+        Log.d(TAG, "Translated into "+requests.size()+" backend requests.\nTheoretical execution time is "+(time/60)+":"+(time%60)+" across "+delays+" delays.");
+    }
+
 }
