@@ -1,6 +1,7 @@
 module 2d_gear(r, teeth, angle, start_angle, round) {
     circle(r=r);
-    t = round == true ? round(teeth) : teeth;
+    nt = teeth*angle/360;
+    t = round == true ? round(nt) : nt;
     a = angle/t;
     for (i = [start_angle:a:start_angle+angle])
     rotate([0,0,i])

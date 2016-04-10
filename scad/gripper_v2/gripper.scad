@@ -240,12 +240,13 @@ module print() {
     translate([30,0,0])
     pusher_big();
     
-    !turner();
+    turner();
+    
+    enclosing(shhb=2);
 
 }
 
 
-//display_gripper();
+display_gripper();
 
-//translate([-150,0,0])
-print();
+//print();

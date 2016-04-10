@@ -3,7 +3,7 @@ use <util.scad>
 use <gear.scad>
 use <servo_horn_enclosing.scad>
 
-teeth = 16;
+teeth = 15;
 r = gear_r();
 
 sideways_length = (56 - arm_c2c())/2;
