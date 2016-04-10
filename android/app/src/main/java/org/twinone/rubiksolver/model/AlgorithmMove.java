@@ -3,6 +3,8 @@ package org.twinone.rubiksolver.model;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -34,4 +36,26 @@ public class AlgorithmMove {
         }
         return moves;
     }
+
+    /**
+     * Reverse an algorithm in place.
+     * @param algorithm Algorithm to reverse
+     */
+    public static void reverse(List<AlgorithmMove> algorithm) {
+        Collections.reverse(algorithm);
+        for (AlgorithmMove move : algorithm)
+            move.reverse = !move.reverse;
+    }
+
+    public static String format(Iterable<AlgorithmMove> algorithm) {
+        String tokens = "";
+        for (AlgorithmMove move : algorithm) {
+            String token = String.valueOf(move.face);
+            if (move.reverse) token += "'";
+            if (tokens.length() > 0) tokens += " ";
+            tokens += token;
+        }
+        return tokens;
+    }
+
 }
