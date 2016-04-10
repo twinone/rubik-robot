@@ -9,10 +9,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.ValueCallback;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import org.twinone.rubiksolver.model.AlgorithmMove;
+import org.twinone.rubiksolver.model.SimpleRobotMapper;
+import org.twinone.rubiksolver.model.comm.DelayRequest;
+import org.twinone.rubiksolver.model.comm.Request;
+import org.twinone.rubiksolver.util.ColorUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +43,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     private FaceCapturer mFaceCapturer;
     private Button mButtonCapture;
+    private WebCube mWebCube;
 
     private RelativeLayout mRootView;
     private CapturedFace[] mCapturedFaces = new CapturedFace[6];
@@ -55,6 +63,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mButtonCapture.setOnClickListener(this);
         mFaceCapturer = new FaceCapturer(this);
 //        mFrameLayout = (FrameLayout) mRootView.findViewById(R.id.frame_layout);
+        mWebCube = new WebCube(this.getActivity());
+        //mRootView.addView(mWebCube);
         return mRootView;
     }
 
@@ -63,7 +73,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         int s = dpToPx(200) / MainActivity.SIZE;
         LinearLayout cpw = (LinearLayout) getRootView().findViewById(R.id.colorPreviewWrapper);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(s, s);
-        int margin = (int) 0.1 * s;
+        int margin = (int) (0.1 * s);
         lp.setMargins(margin, margin, margin, margin);
         for (int i = 0; i < MainActivity.SIZE; i++) {
             LinearLayout l = new LinearLayout(getActivity());
@@ -128,18 +138,36 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                     }
                 }
             }
+            char[] state = new char[6 * 9];
             for (int l = 0; l < 6; l++) {
-                Integer a[] = kNN(colors, l * 9 + 4, 6);
-                String x = "Face: " + l + " ";
-                for (int i : a) {
-                    x += " " + i;
-                }
-                Log.d(TAG, x);
+                List<Integer> a = kNN(colors, l * 9 + 4, 6);
+                a.add(l * 9 + 4);
+                for (int piece : a)
+                    state[piece] = "ULFRBD".charAt(l);
             }
+            boolean invalidState = false;
+            for (char piece : state) if (piece == 0) invalidState = true;
+            if (invalidState) {
+                Log.e(TAG, "Invalid state, scanning didn't work out well.");
+                return;
+            }
+            Log.d(TAG, "State: https://twinone.github.io/rubik-solver/web/?state="+String.valueOf(state));
+            mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
+                @Override
+                public void onReceiveValue(String value) {
+                    if (value.equals("null")) {
+                        Log.e(TAG, "Unsolvable state, or scanning failed.");
+                        return;
+                    }
+
+                    String alg = value.substring(1,value.length()-1); //FIXME: crappy
+                    handleAlgorithm(alg);
+                }
+            });
         }
     }
 
-    private static Integer[] kNN(int[] colors, int index, int k) {
+    private static List<Integer> kNN(int[] colors, int index, int k) {
         class Pair {
             int index;
             double dst;
@@ -156,31 +184,19 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         Collections.sort(dsts, new Comparator<Pair>() {
             @Override
             public int compare(Pair lhs, Pair rhs) {
-                double a = lhs.dst - rhs.dst;
-                if (a < 0) return -1;
-                if (a > 0) return 1;
-                return 0;
+                return (int) Math.signum(lhs.dst - rhs.dst);
             }
         });
-        double fmd = dsts.get(7).dst;
-        double next = dsts.get(8).dst;
-        Log.d(TAG, "group max: "+fmd +", next: "+next + ", diff="+(next-fmd));
-        List<Integer> idx = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            idx.add(dsts.get(i).index);
-            int color = colors[dsts.get(i).index];
-            float hsv[] = new float[3];
-            Color.colorToHSV(color, hsv);
-            int xxx = idx.get(i);
-            if (xxx/9 != index / 9) {
-                // detected wrong face
-                Log.d(TAG, "  wrong face " + xxx + " " + dsts.get(i).dst + " (face " + xxx / 9 + "): #" + colorToHex(color) + ", hsv=" + hsv[0] + "," + hsv[1] + "," + hsv[2]);
-            }
-        }
-        Collections.sort(idx);
-        return idx.toArray(new Integer[idx.size()]);
-    }
+        //double fmd = dsts.get(7).dst;
+        //double next = dsts.get(8).dst;
+        //Log.d(TAG, "group max: "+fmd +", next: "+next + ", diff="+(next-fmd));
 
+        List<Integer> idx = new ArrayList<>();
+        for (int i = 0; i < 8; i++)
+            idx.add(dsts.get(i).index);
+        Collections.sort(idx);
+        return idx;
+    }
 
     private void showColors(CapturedFace f) {
         for (int i = 0; i < f.size; i++) {
@@ -241,27 +257,33 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     /**
      * Returns the distance between two colors
      */
-    // TODO test
     public static double colorDistance(int a, int b) {
-        float[] hsva = new float[3];
-        Color.colorToHSV(a, hsva);
-        float[] hsvb = new float[3];
-        Color.colorToHSV(b, hsvb);
-
-        // hue angle difference
-        float angle = Math.abs(hsva[0] - hsvb[0]);
-        if (angle > 180) angle -= (angle - 180) * 2; // smallest path is maximum 180º
-
-        // divide by 180 because that's the maximum angle of the smallest path
-        float hue = angle / 180.f;
-        float sat = Math.abs(hsva[1] - hsvb[1]);
-        float val = Math.abs(hsva[2] - hsvb[2]);
-
-        float dst = 0;
-        dst += hue * sat;
-        dst += sat * sat;
-        dst += val * val;
-
-        return Math.sqrt(dst) / Math.sqrt(3);
+        // see http://stackoverflow.com/a/26998429
+        double[] lab1 = ColorUtil.ColorToLAB(a);
+        double[] lab2 = ColorUtil.ColorToLAB(b);
+        return Math.sqrt(Math.pow(lab2[0] - lab1[0], 2) + Math.pow(lab2[1] - lab1[1], 2) + Math.pow(lab2[2] - lab1[2], 2));
     }
+
+    public void handleAlgorithm(String alg) {
+        List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
+        Log.d(TAG, "Solve (" + moves.size() + "): "+alg);
+
+        List<AlgorithmMove> preMappedMoves = new ArrayList<>();
+        for (AlgorithmMove move : moves)
+            Collections.addAll(preMappedMoves, SimpleRobotMapper.preMap(move));
+        Log.d(TAG, "Pre-mapped moves (" + preMappedMoves.size() + "): "+AlgorithmMove.format(preMappedMoves));
+
+        SimpleRobotMapper mapper = new SimpleRobotMapper();
+        List<Request> requests = mapper.map(moves);
+        int time = 0, delays = 0;
+        for (Request request : requests) {
+            if (request instanceof DelayRequest) {
+                time += ((DelayRequest) request).getDelay();
+                delays++;
+            }
+        }
+        time /= 1000;
+        Log.d(TAG, "Translated into "+requests.size()+" backend requests.\nTheoretical execution time is "+(time/60)+":"+(time%60)+" across "+delays+" delays.");
+    }
+
 }

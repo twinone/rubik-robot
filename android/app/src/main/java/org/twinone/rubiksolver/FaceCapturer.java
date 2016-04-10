@@ -134,6 +134,7 @@ public class FaceCapturer {
                         Bitmap bitmap = getTransformedBitmap(data);
                         CapturedFace capturedFace = getFaceFromBitmap(bitmap);
                         c.onFaceCaptured(id, capturedFace);
+                        mCamera.startPreview();
                     }
                 });
             }
