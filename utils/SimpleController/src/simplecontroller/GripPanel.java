@@ -39,7 +39,11 @@ public class GripPanel extends JPanel {
         
         field.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                setPosition(Integer.parseInt(field.getText()));
+                try {
+                    int position = Integer.parseInt(field.getText());
+                    if (position < 0 || position > 180) return;
+                    setPosition(position);
+                } catch (NumberFormatException ex) {}
             }
         });
         slider.addChangeListener(new ChangeListener() {

@@ -94,7 +94,7 @@ public class SimpleController {
             }
         }
     }
-    public void setMotorHighLevel(int motor, int position) {
+    public void setMotorHighLevel(int m, int position) {
         try {
             positions[m] = -1;
             // FIXME: move logic to construct motor from side, to model
@@ -135,6 +135,7 @@ public class SimpleController {
         globalControls.add(resendButton);
         globalControls.add(algorithmFieldLabel);
         globalControls.add(algorithmField);
+        // FIXME: allow mapper delays to be changed
         
         JLabel servoControlLabel = new JLabel("Individual servo control");
         JPanel servoControlBody = new JPanel(new GridLayout(4, 2, 5, 5));
