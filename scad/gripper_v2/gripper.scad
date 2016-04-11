@@ -11,6 +11,8 @@ function back_y() = -gear_r()-10;
 function base_rounding_radius() = 7;
 function nut_h() = 2.3;
 
+function grip_pad_h() = servo_base_height();
+
 function back_h() = nut_h()+servo_elevation()+2*servo_base_height();
 function turn_r() = back_h()/2;
 function turn_h() = 30;
@@ -77,8 +79,8 @@ module show_servo() {
         rotate([0,0,-90]) {
             translate([0,0,servo_base_height()]) servo();
         }
-        translate([0,0,servo_elevation()+servo_base_height()])
-        enclosing();
+//        translate([0,0,servo_elevation()+servo_base_height()])
+//        enclosing();
     }
 }
 
@@ -114,10 +116,10 @@ module pusher() {
 }
 module pusher_big() {
     translate([0,0,2])
-    linear_extrude(height=servo_elevation()+servo_base_height()-2)
-    arm(r=gear_r()/3*2);
+    linear_extrude(2)
+    arm(r=gear_r()/1.2);
     linear_extrude(height=2)
-    arm(r=arm_width()/2);    
+    arm(r=arm_width()/1.5);    
 }
 
 
@@ -139,40 +141,47 @@ module turner() {
     h = back_h();
     
     turner_height = 10;
-    linear_extrude(height=h)
-    difference() {
-        hull()
-        dup()
-        translate([-(br+sr)/2+sr,back_x()/2,0])
-        circle(r=mr);
+    module s(h) {
+        linear_extrude(height=h)
+        difference() {
+            hull()
+            dup()
+            translate([-(br+sr)/2+sr,back_x()/2,0])
+            circle(r=mr);
 
-        dup()
-        translate([0, back_x()/2,0])
-        circle(r=screw_r()); // without tolerance for better grip
+            dup()
+            translate([0, back_x()/2,0])
+            circle(r=screw_r()); // without tolerance for better grip
+        }
     }
+    translate([0,0,servo_base_height()])
+    s(h-servo_base_height()*2);
     
     gap_h = turn_gap_h();
     gap_d = turn_gap_d();
     pad = turn_pad();
     sd = 10;
-    translate([-br+sr-pad,0,h/2])
-    rotate([0,-90,0]) {
-        difference() {
+    difference() {
+        translate([-br+sr-pad,0,h/2])
+        rotate([0,-90,0]) {
             difference() {
-                cylinder(r=h/2, h=turn_h()+sr);
-                translate([0,0,sr+(turn_h())/2-gap_h/2])
                 difference() {
-                    cylinder(h=gap_h, r=h/2+1);
-                    cylinder(h=gap_h, r=h/2-gap_d);
+                    cylinder(r=h/2, h=turn_h()+sr);
+                    translate([0,0,sr+(turn_h())/2-gap_h/2])
+                    difference() {
+                        cylinder(h=gap_h, r=h/2+1);
+                        cylinder(h=gap_h, r=h/2-gap_d);
+                    }
                 }
+                
+                translate([0,0,turn_h()+sr-sd])
+                turner_screws(h=sd);
+    //            cylinder(r=screw_r(),h=sd); // yes, without tolerance
             }
-            
-            translate([0,0,turn_h()+sr-sd])
-            turner_screws(h=sd);
-//            cylinder(r=screw_r(),h=sd); // yes, without tolerance
+    //        translate([0,0,turn_h()+sr])
+    //        gear(r=turn_gear_r(), teeth=15, h = 4);
         }
-//        translate([0,0,turn_h()+sr])
-//        gear(r=turn_gear_r(), teeth=15, h = 4);
+        s(h);
     }
 }
 
@@ -182,7 +191,7 @@ module turner_screws(h) {
     for (i = [0:n-1])
     rotate(360/n*i)
     translate([sdst,0,0])
-    cylinder(r=screw_r()+tolerance(),h=h);
+    cylinder(r=screw_r(),h=h);
 }
 
 module display_turner() {
@@ -196,20 +205,23 @@ module display_gripper() {
     arm_angle = $t < 0.5 ? $t*2*tgt : tgt-($t-0.5)*2*tgt;
     
     // BASE
-    color("red")
-    base();
-    show_servo();
+    //color("red")
+    %translate([0,0,servo_base_height()]) {
+        base();
+        show_servo();
+    }
     
-    translate([0,0,servo_elevation()+servo_base_height()*3+nut_h()])
+    %translate([0,0,servo_elevation()+servo_base_height()*2+nut_h()])
     top();
 
 
     // GEAR ARMS
-    translate([0,0,servo_elevation()+servo_base_height()*2])
+    translate([0,0,servo_elevation()*0+servo_base_height()*3])
     arms(height = servo_base_height(), center = true, angle=arm_angle);
   
 
     // PUSHERS
+    translate([0,0,servo_base_height()])
     color("orange") {
         translate([0,arm_c2c()/2,servo_base_height()*1])
         pusher_big();
@@ -240,12 +252,12 @@ module print() {
     translate([30,0,0])
     pusher_big();
     
-    !turner();
+    turner();
+    
+    //enclosing(shhb=2);
 
 }
 
-
-//display_gripper();
-
-//translate([-150,0,0])
-print();
+translate([back_y(),0,servo_base_height()]*-1)
+translate([turn_br()+turn_pad(),0,-turn_r()])
+display_gripper();

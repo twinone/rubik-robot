@@ -13,6 +13,7 @@ function holder_d() = turn_h();
 function gripper_r() = turn_r();
 function holder_th() = 8;
 function holder_w() = gripper_r()*2+holder_th()*2;
+function holder_dst() = 183;
 
 function gears_c2c() = 20;
 function gear_conversion_factor() = 0.67;
@@ -26,11 +27,15 @@ function servo_gear_r() = base_r() * servo_gear_f();
 
 function sh_r() = 8/2;
 function sh_h() = 3;
-function sh_w() = (sh_h()+2)*2;
+function sh_w() = 10;
+
+function rail_sep_w() = sh_w()/4;
+
 
 tgt = 90;
 angle = $t < 0.5 ? $t*2*tgt : tgt-($t-0.5)*2*tgt;
 angle=-25+180;
+
 module screw_head_padding(h = sh_h()) {
     w = sh_w();
     r = sh_r();
@@ -188,7 +193,7 @@ module holder_top() {
     }
     
     cw = servo_d();
-    color("purple")
+    //color("purple")
     translate([holder_d(),0,holder_h()+h])
     rotate([-90,0,90]){
         difference() {
@@ -239,12 +244,111 @@ module turner_gear() {
 }
 
 
+
+module foot() {
+    dst = holder_dst();
+    w = holder_w()/2;
+    r = dst/2-w;
+    module c(r) {
+        intersection() {
+            translate([w,w])
+            square([dst,dst]);
+            translate([w,w])
+            circle(r=r,h=2);
+        }
+    }
+
+    linear_extrude(height=sh_h()*2) {
+        intersection() {
+            union() {
+                difference() {
+                    c(r+sh_w());
+                    c(r);
+                }
+                difference() {
+                    c(r+sh_w()+holder_d()-sh_w());
+                    c(r+holder_d()-sh_w());
+                }
+            }
+            translate([1,1]*(holder_w()/2+sh_w()))
+            square([dst,dst]);
+
+        }
+        
+    }
+    
+    module m(x,y) {
+        translate([x,y,0]) children();
+        translate([y,x,0]) children();
+    }
+    difference() {
+        translate([0,0,sh_h()*2])
+        linear_extrude(height=sh_h()*2) {
+            difference() {
+                c(r+sh_w());
+                c(r);
+            }
+            difference() {
+                c(r+sh_w()+holder_d()-sh_w());
+                c(r+holder_d()-sh_w());
+            }
+        }
+        translate([1,1,0]*(holder_w()/2+sh_w()*2))
+        cube([dst,dst,30]);
+        
+        m(dst/2+sh_w()/2,holder_w()/2+sh_w()/2) cylinder(h=100,r=screw_r()+tolerance());
+        m(dst/2+holder_d()-sh_w()/2,holder_w()/2+sh_w()/2) cylinder(h=100,r=screw_r()+tolerance());
+    }
+    
+    a = 40;
+    n = 8;
+    cw = rail_sep_w();
+    translate([w,w,0])
+    for(i = [0:n-1])
+    rotate(a/2+(90-a)/(n-1)*i)
+    translate([dst/2-w+sh_w()/2,-cw/2,0])
+    cube([holder_d()-sh_w(),cw,sh_h()*2]);
+
+       
+}
+
+module cable_holder() {
+    inner_w = rail_sep_w()-tolerance();
+    inner_r = inner_w/2;
+    th = 2;
+    w=inner_w+2*th;
+    r=w/2;
+    h = sh_h()*6;
+    d = (holder_w()-sh_w()*2-tolerance())/3*2;
+    linear_extrude(height=d)
+    difference() {
+        hull() {
+            translate([h,0,0])circle(r=r);
+            translate([0,-w/2,0]) square([w,w]);
+        }
+        hull() {
+            translate([h,0,0]) circle(r=inner_r);
+            translate([0,-inner_w/2,0]) square([inner_w,inner_w]);
+        }
+    }
+}
+
+
+
+
 module display() {
-    color("green")
     translate([0,holder_w()/2,holder_h()])
     mirror()
-    rotate([-angle*turn_gear_f(),0,0])
-    display_turner();
+    
+    // full gripper
+    rotate([90,0,0])
+    translate([back_y(),0,servo_base_height()]*-1)
+    translate([turn_br()+turn_pad(),0,-turn_r()])
+    display_gripper();
+
+    // only turner
+    // rotate([-angle*turn_gear_f(),0,0])
+    // display_turner();
 
     translate([holder_d(),holder_w()/2,holder_h()+gears_c2c()]) {
         servo_gear();
@@ -267,20 +371,40 @@ module display() {
     turner_gear();
 }
 
+
+module display4() {
+    for (i = [0:3]) {
+        rotate(i*90) {
+            translate([holder_dst()/2,-holder_w()/2,0])
+            display();
+            foot();
+            translate([0,0,holder_h()-sh_h()])
+            %foot();
+        }
+    }
+    
+    %translate([0,0,holder_h()])
+    cube([1,1,1]*56,center=true);
+}
+
 module print() {
     $fn=80;
     holder_bottom();
     holder_top();
     
-    
     union(){
-    !    translate([25,0,0])
+        translate([25,0,0])
         rotate([0,-90,0])
         servo_gear();
         
         turner_gear();
     }
+    foot($fn=150);
+    
+    cable_holder();
+
 
 }
-display();
-//print();
+
+display4();
+// print();

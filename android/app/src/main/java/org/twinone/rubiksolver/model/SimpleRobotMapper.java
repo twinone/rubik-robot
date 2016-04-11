@@ -1,7 +1,5 @@
 package org.twinone.rubiksolver.model;
 
-import android.support.v4.widget.ListViewAutoScrollHelper;
-
 import org.twinone.rubiksolver.model.comm.DelayRequest;
 import org.twinone.rubiksolver.model.comm.MoveRequest;
 import org.twinone.rubiksolver.model.comm.Request;
@@ -25,7 +23,7 @@ public class SimpleRobotMapper {
 
         if (move.face == 'Y') {
             List<AlgorithmMove> result = AlgorithmMove.parse("X Z' X'");
-            if (move.reverse) AlgorithmMove.reverse(result);
+            result.get(1).reverse = !move.reverse;
             return result.toArray(new AlgorithmMove[0]);
         }
 
@@ -39,10 +37,10 @@ public class SimpleRobotMapper {
         throw new IllegalArgumentException("Unknown move");
     }
 
-    protected short delayPerGrip = 500;
-    protected short delayPerUngrip = 500;
-    protected short delayPerRotation = 500;
-    protected short delayPerFace = 500;
+    protected short delayPerGrip = 1000;
+    protected short delayPerUngrip = 1000;
+    protected short delayPerRotation = 1000;
+    protected short delayPerFace = 1000;
 
     public void setDelayPerGrip(short delayPerGrip) {
         this.delayPerGrip = delayPerGrip;
@@ -130,50 +128,54 @@ public class SimpleRobotMapper {
      */
     public void map(List<Request> requests, AlgorithmMove move) {
         List<Request[]> chunks = new ArrayList<>();
+        boolean forward = !move.reverse;
 
         // Cube rotations
         if (move.face == 'X' || move.face == 'Z') {
-            boolean axis = (move.face == 'X');
+            boolean axis = !(move.face == 'X');
 
             // First chunk: ungrab the other axis so we can rotate the cube
-            chunks.add(gripAxis(!axis, false));
+            chunks.add(gripAxis(!axis, forward ? false : true));
             // Second chunk: rotate the cube with the main axis
-            chunks.add(rotateAxis(axis, 1));
+            chunks.add(rotateAxis(axis, forward ? 1 : 0));
             // Third chunk: grab the cube with the other axis again
-            chunks.add(gripAxis(!axis, true));
+            chunks.add(gripAxis(!axis, forward ? true : false));
             // Fourth chunk: ungrab with the main axis so we can reset
-            chunks.add(gripAxis(axis, false));
+            chunks.add(gripAxis(axis, forward ? false : true));
             // Fifth chunk: reset the main axis back into position
-            chunks.add(rotateAxis(axis, 0));
+            chunks.add(rotateAxis(axis, forward ? 0 : 1));
             // Sixth chunk: grab with the main axis again
-            chunks.add(gripAxis(axis, true));
+            chunks.add(gripAxis(axis, forward ? true : false));
         }
 
         // Face rotation
         int side = "RBLF".indexOf(move.face);
         if (side != -1) {
+            if (side == 1 || side == 2) forward = !forward;
+            
             // First chunk: rotate the face
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_ROTATION, 1),
+                    new MoveRequest(side, MoveRequest.MOTOR_ROTATION, forward ? 1 : 0),
                     new DelayRequest(calculateDelay(false, false, false, true)),
             });
             // Second chunk: ungrab the side to reset
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_GRIP, 0),
+                    new MoveRequest(side, MoveRequest.MOTOR_GRIP, forward ? 0 : 1),
                     new DelayRequest(calculateDelay(false, true, false, false)),
             });
             // Third chunk: reset gripper back into position
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_ROTATION, 0),
+                    new MoveRequest(side, MoveRequest.MOTOR_ROTATION, forward ? 0 : 1),
                     new DelayRequest(calculateDelay(false, false, false, true)),
             });
             // Fourth chunk: grab face again
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_GRIP, 1),
+                    new MoveRequest(side, MoveRequest.MOTOR_GRIP, forward ? 1 : 0),
                     new DelayRequest(calculateDelay(true, false, false, false)),
             });
         }
 
+        // TODO: how the fuck can this work. should be if (!forward)??
         if (move.reverse) Collections.reverse(chunks);
         for (Request[] chunk : chunks)
             Collections.addAll(requests, chunk);

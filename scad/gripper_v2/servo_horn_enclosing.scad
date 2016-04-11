@@ -110,7 +110,9 @@ module screws(a1, a2) {
 // shhb = screw head height bottom
 // shr =  screw head radius
 module enclosing(shht=0, shhb=0, shr=3.5, a1=0, a2=180) {
+    rotate(180)
     remove_servo_horn()
+    rotate(180)
     difference() {
         union() {
             main_enclosing();
@@ -149,3 +151,5 @@ module enclosing_centered_holes(a1 = 0, a2 = 180) {
     rotate(a1)
     translate([enclosing_dst_large(),0,0]) screw_hole();
 }
+
+enclosing();
