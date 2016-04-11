@@ -28,7 +28,7 @@ public class WriteRequest extends Request {
     public WriteRequest(int side, int motor, int position) {
         if (side < 0 || side >= 4) throw new IllegalArgumentException("Invalid side specified");
         if (motor < 0 || motor >= 2) throw new IllegalArgumentException("Invalid motor specified");
-        if (position < 0 || position >= 180) throw new IllegalArgumentException("Invalid position specified");
+        if (position < 0 || position > 180) throw new IllegalArgumentException("Invalid position specified");
         this.side = side;
         this.motor = motor;
         this.position = position;
