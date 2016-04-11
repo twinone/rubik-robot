@@ -244,53 +244,6 @@ module turner_gear() {
 }
 
 
-module display() {
-    translate([0,holder_w()/2,holder_h()])
-    mirror()
-    
-    // full gripper
-    rotate([90,0,0])
-    translate([back_y(),0,servo_base_height()]*-1)
-    translate([turn_br()+turn_pad(),0,-turn_r()])
-    display_gripper();
-
-    // only turner
-    // rotate([-angle*turn_gear_f(),0,0])
-    // display_turner();
-
-    translate([holder_d(),holder_w()/2,holder_h()+gears_c2c()]) {
-        servo_gear();
-        translate([-servo_elevation()-servo_base_height()*1+1,0,0])
-        rotate([-90,180,-90]) {
-            servo();
-//            translate([0,0,servo_elevation()+servo_base_height()])
-//            rotate([0,0,90+180+angle])
-//            enclosing(a2=servo_gear_angle);
-        }
-    }
-
-    rotate([90,0,90])
-    holder_bottom();
-    holder_top();
-    
-    color("green")
-    translate([holder_d(), holder_w()/2, holder_h()])
-    rotate([0,90,0])
-    turner_gear();
-}
-
-
-module display4() {
-    for (i = [0:3]) {
-        rotate(i*90) {
-            translate([holder_dst()/2,-holder_w()/2,0])
-            display();
-            foot();
-            translate([0,0,holder_h()-sh_h()])
-            %foot();
-        }
-    }
-}
 
 module foot() {
     dst = holder_dst();
@@ -382,6 +335,57 @@ module cable_holder() {
 
 
 
+
+module display() {
+    translate([0,holder_w()/2,holder_h()])
+    mirror()
+    
+    // full gripper
+    rotate([90,0,0])
+    translate([back_y(),0,servo_base_height()]*-1)
+    translate([turn_br()+turn_pad(),0,-turn_r()])
+    display_gripper();
+
+    // only turner
+    // rotate([-angle*turn_gear_f(),0,0])
+    // display_turner();
+
+    translate([holder_d(),holder_w()/2,holder_h()+gears_c2c()]) {
+        servo_gear();
+        translate([-servo_elevation()-servo_base_height()*1+1,0,0])
+        rotate([-90,180,-90]) {
+            servo();
+//            translate([0,0,servo_elevation()+servo_base_height()])
+//            rotate([0,0,90+180+angle])
+//            enclosing(a2=servo_gear_angle);
+        }
+    }
+
+    rotate([90,0,90])
+    holder_bottom();
+    holder_top();
+    
+    color("green")
+    translate([holder_d(), holder_w()/2, holder_h()])
+    rotate([0,90,0])
+    turner_gear();
+}
+
+
+module display4() {
+    for (i = [0:3]) {
+        rotate(i*90) {
+            translate([holder_dst()/2,-holder_w()/2,0])
+            display();
+            foot();
+            translate([0,0,holder_h()-sh_h()])
+            %foot();
+        }
+    }
+    
+    %translate([0,0,holder_h()])
+    cube([1,1,1]*56,center=true);
+}
 
 module print() {
     $fn=80;
