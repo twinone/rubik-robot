@@ -97,6 +97,7 @@ public class SimpleController {
     public void setMotorHighLevel(int motor, int position) {
         try {
             positions[m] = -1;
+            // FIXME: move logic to construct motor from side, to model
             Packet.write(output, new MoveRequest(m >> 1, m & 1, position));
         } catch (IOException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
@@ -190,6 +191,12 @@ public class SimpleController {
                 Packet.write(output, request);
             System.out.println("Sending "+requests.size()+" requests.");
             algorithmField.setText("");
+
+            // FIXME: do actual sending in separate class+thread
+            //        wait for ok
+            //        send N ops before reading ok
+            //        send continue at the end
+            //        disable UI while algorithm running
         } catch (IOException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
