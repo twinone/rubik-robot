@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,10 +22,17 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.twinone.rubiksolver.model.AlgorithmMove;
+import org.twinone.rubiksolver.model.SimpleRobotMapper;
+import org.twinone.rubiksolver.model.comm.MoveRequest;
+import org.twinone.rubiksolver.model.comm.Packet;
+import org.twinone.rubiksolver.model.comm.Request;
+import org.twinone.rubiksolver.model.comm.WriteRequest;
 
 /**
  *
@@ -34,33 +42,39 @@ public class SimpleController {
 
     OutputStream output;
     InputStream input;
+    SimpleRobotMapper mapper = new SimpleRobotMapper();
     
     JFrame frame;
     
     // Global controls
     JToggleButton sendUpdatesButton;
     JButton resendButton;
+    JTextField algorithmField;
     
     // Servo control
-    GripPanel[] gripPanels;
-    RotationPanel[] rotationPanels;
+    GripPanel[] gripPanels = new GripPanel[4];
+    RotationPanel[] rotationPanels = new RotationPanel[4];
     
     // Axis control
-    GripPanel[] axisGripPanels;
-    RotationPanel[] axisRotationPanels;
+    GripPanel[] axisGripPanels = new GripPanel[4];
+    RotationPanel[] axisRotationPanels = new RotationPanel[4];
     
     // Robot communication
-    boolean sendingUpdates = false;
-    int positions[] = new int[8];
+    boolean sendingUpdates = true;
+    int positions[] = new int[] { -1, -1, -1, -1, -1, -1, -1, -1 };
     static public interface MotorChangeListener {
         void onMotorChanged(int m, int p);
     }
     public void setMotor(int m, int p) {
         if (positions[m] != p) {
-            if (sendingUpdates) {
-                // TODO: write
-            }
             positions[m] = p;
+            if (sendingUpdates) {
+                try {
+                    Packet.write(output, new WriteRequest(m >> 1, m & 1, positions[m]));
+                } catch (IOException ex) {
+                    Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
             for (MotorChangeListener listener : listeners) {
                 listener.onMotorChanged(m, p);
             }
@@ -72,7 +86,20 @@ public class SimpleController {
     }
     public void resendAll() {
         for (int m = 0; m < 8; m++) {
-            //TODO: write
+            if (positions[m] == -1) continue;
+            try {
+                Packet.write(output, new WriteRequest(m >> 1, m & 1, positions[m]));
+            } catch (IOException ex) {
+                Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    public void setMotorHighLevel(int motor, int position) {
+        try {
+            positions[m] = -1;
+            Packet.write(output, new MoveRequest(m >> 1, m & 1, position));
+        } catch (IOException ex) {
+            Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -87,22 +114,32 @@ public class SimpleController {
                 sendingUpdates = sendUpdatesButton.isSelected();
             }
         });
-        resendButton = new JButton("Updates");
+        resendButton = new JButton("Send");
         resendButton.setSelected(true);
         resendButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 resendAll();
             }
         });
+        JLabel algorithmFieldLabel = new JLabel("Algorithm:");
+        algorithmField = new JTextField();
+        algorithmField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                runAlgorithm();
+            }
+        });
+        algorithmField.setColumns(15);
         JPanel globalControls = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
         globalControls.add(sendUpdatesButton);
         globalControls.add(resendButton);
+        globalControls.add(algorithmFieldLabel);
+        globalControls.add(algorithmField);
         
         JLabel servoControlLabel = new JLabel("Individual servo control");
         JPanel servoControlBody = new JPanel(new GridLayout(4, 2, 5, 5));
         for (int s = 0; s < 4; s++) {
-            gripPanels[s] = new GripPanel(new int[] { s });
-            rotationPanels[s] = new RotationPanel(new int[] { s });
+            gripPanels[s] = new GripPanel(this, new int[] { s });
+            rotationPanels[s] = new RotationPanel(this, new int[] { s });
             servoControlBody.add(gripPanels[s]);
             servoControlBody.add(rotationPanels[s]);
         }
@@ -114,8 +151,8 @@ public class SimpleController {
         JLabel axisControlLabel = new JLabel("Whole axis control");
         JPanel axisControlBody = new JPanel(new GridLayout(2, 2, 5, 5));
         for (int s = 0; s < 2; s++) {
-            axisGripPanels[s] = new GripPanel(new int[] { s, s+2 });
-            axisRotationPanels[s] = new RotationPanel(new int[] { s, s+2 });
+            axisGripPanels[s] = new GripPanel(this, new int[] { s, s+2 });
+            axisRotationPanels[s] = new RotationPanel(this, new int[] { s, s+2 });
             axisControlBody.add(axisGripPanels[s]);
             axisControlBody.add(axisRotationPanels[s]);
         }
@@ -124,26 +161,51 @@ public class SimpleController {
         axisControlPanel.add(axisControlLabel, BorderLayout.NORTH);
         axisControlPanel.add(axisControlBody, BorderLayout.CENTER);
         
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
+        mainPanel.add(globalControls);
+        mainPanel.add(servoControlPanel);
+        mainPanel.add(axisControlPanel);
+        
         frame = new JFrame("Backend controller");
-        frame.setLayout(new BoxLayout(frame, BoxLayout.PAGE_AXIS));
-        frame.add(globalControls);
-        frame.add(servoControlPanel);
-        frame.add(axisControlPanel);
+        frame.add(mainPanel);
+        frame.setMinimumSize(new Dimension(700, 400));
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
-        frame.setMinimumSize(new Dimension(600, 480));
     }
     
+    protected void runAlgorithm() {
+        try {
+            String alg = algorithmField.getText();
+            List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
+
+            List<AlgorithmMove> preMappedMoves = new ArrayList<>();
+            for (AlgorithmMove move : moves)
+                Collections.addAll(preMappedMoves, SimpleRobotMapper.preMap(move));
+            System.out.println("Performing algorithm: " + AlgorithmMove.format(moves));
+            System.out.println("Pre-mapped algorithm: " + AlgorithmMove.format(preMappedMoves));
+
+            List<Request> requests = mapper.map(moves);
+            for (Request request : requests)
+                Packet.write(output, request);
+            System.out.println("Sending "+requests.size()+" requests.");
+            algorithmField.setText("");
+        } catch (IOException ex) {
+            Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
         try {
-            OutputStream output = new FileOutputStream("/dev/ttyAMC0");
-            InputStream input = new FileInputStream("/dev/ttyAMC0");
+            OutputStream output = new FileOutputStream("/dev/ttyACM0");
+            InputStream input = new FileInputStream("/dev/ttyACM0");
             SimpleController c = new SimpleController(output, input);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
 }
