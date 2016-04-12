@@ -2,18 +2,19 @@
 
 // MOTOR PARAMS
 
-int calibration_initial [8] = {
-  0, 0,
-  0, 0,
-  0, 0,
-  0, 0
+int calibration_offset [8] = {
+  118,  25,
+  129, 170,
+   67, 160,
+   81,  18,
 };
 
-int calibration_final [8] = {
-  160, 160,
-  160, 160,
-  160, 160,
-  160, 160,
+int grip_angle = +20;
+int ungrip_angle = -40;
+int turn_angle = 142;
+
+int calibration_reverse [4] = {
+  0, 1, 1, 0,
 };
 
 int servo_pins [8] = {
@@ -45,8 +46,10 @@ void setup() {
   pinMode(13, OUTPUT); //FIXME
   Serial.begin(115200);
   
-  for (int i = 0; i < 8; i++)
+  for (int i = 0; i < 8; i++) {
     servos[i].attach(servo_pins[i]);
+    servos[i].write(calibration_offset[i]);
+  }
 }
 
 void processRequest() {
@@ -142,13 +145,18 @@ void requestMove(char *data, int length) {
     return;
   }
   int motor = data[1], pos = data[2];
-  if (motor < 0 || motor >= 4 || pos < 0 || pos >= 2) {
+  if (motor < 0 || motor >= 8 || pos < 0 || pos >= 2) {
     emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
     processingRequests = false;
     return;
   }
-  pos = pos ? calibration_final[motor] : calibration_initial[motor];
-  servos[motor].write(pos);
+  int angle = calibration_offset[motor];
+  if (motor & 1) {
+    angle += (pos ? turn_angle : 0) * (calibration_reverse[motor >> 1] ? -1 : +1);
+  } else {
+    angle += pos ? grip_angle : ungrip_angle;
+  }
+  servos[motor].write(angle);
   emitResponseSimple(RESPONSE_OK);
 }
 
@@ -158,8 +166,8 @@ void requestWrite(char *data, int length) {
     processingRequests = false;
     return;
   }
-  int motor = data[1], pos = data[2];
-  if (motor < 0 || motor >= 4 || pos < 0 || pos >= 180) {
+  int motor = data[1], pos = ((unsigned char *)data)[2];
+  if (motor < 0 || motor >= 8 || pos < 0 || pos > 180) {
     emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
     processingRequests = false;
     return;
