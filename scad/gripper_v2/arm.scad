@@ -62,7 +62,7 @@ module arm_left(height) {
 
 module arm_right(height) {
     rotate(180-arm_angle())
-    remove_servo_horn(horns=[true,false,true,false])
+    remove_servo_horn(horns=[true,false,true,false], h1=0)
     rotate(180+arm_angle())
     difference() {
         union() {

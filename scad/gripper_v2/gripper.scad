@@ -250,6 +250,7 @@ module print() {
     arms(height = servo_base_height(), center = true, extrasep = 5);
     
     translate([30,0,0])
+    !rotate([180,0,0])
     pusher_big();
     
     turner();
@@ -258,6 +259,7 @@ module print() {
 
 }
 
-translate([back_y(),0,servo_base_height()]*-1)
-translate([turn_br()+turn_pad(),0,-turn_r()])
-display_gripper();
+//translate([back_y(),0,servo_base_height()]*-1)
+//translate([turn_br()+turn_pad(),0,-turn_r()])
+//display_gripper();
+print();
