@@ -7,7 +7,6 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,9 +28,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.twinone.rubiksolver.model.AlgorithmMove;
 import org.twinone.rubiksolver.model.SimpleRobotMapper;
-import org.twinone.rubiksolver.model.comm.MoveRequest;
+import org.twinone.rubiksolver.model.comm.DetachRequest;
+import org.twinone.rubiksolver.model.comm.FailedResponseException;
 import org.twinone.rubiksolver.model.comm.Packet;
 import org.twinone.rubiksolver.model.comm.Request;
+import org.twinone.rubiksolver.model.comm.Response;
+import org.twinone.rubiksolver.model.comm.ResumeRequest;
 import org.twinone.rubiksolver.model.comm.WriteRequest;
 
 /**
@@ -40,13 +42,13 @@ import org.twinone.rubiksolver.model.comm.WriteRequest;
  */
 public class SimpleController {
 
-    OutputStream output;
-    InputStream input;
+    RobotScheduler scheduler;
     SimpleRobotMapper mapper = new SimpleRobotMapper();
     
     JFrame frame;
     
     // Global controls
+    JButton detachButton;
     JToggleButton sendUpdatesButton;
     JButton resendButton;
     JTextField algorithmField;
@@ -70,8 +72,8 @@ public class SimpleController {
             positions[m] = p;
             if (sendingUpdates) {
                 try {
-                    Packet.write(output, new WriteRequest(m >> 1, m & 1, positions[m]));
-                } catch (IOException ex) {
+                    scheduler.put(new WriteRequest(m, positions[m]));
+                } catch (InterruptedException ex) {
                     Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
@@ -88,26 +90,39 @@ public class SimpleController {
         for (int m = 0; m < 8; m++) {
             if (positions[m] == -1) continue;
             try {
-                Packet.write(output, new WriteRequest(m >> 1, m & 1, positions[m]));
-            } catch (IOException ex) {
+                scheduler.put(new WriteRequest(m, positions[m]));
+            } catch (InterruptedException ex) {
                 Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
     public void setMotorHighLevel(int m, int position) {
+        //FIXME: ugly hack here
+        WriteRequest r;
+        if ((m & 1) == 0)
+            r = mapper.gripSide(m >> 1, position != 0, 0);
+        else
+            r = mapper.rotateSide(m >> 1, position, 0);
+        setMotor(m, r.getPosition());
+    }
+    public void detachMotor(int m) {
         try {
             positions[m] = -1;
-            // FIXME: move logic to construct motor from side, to model
-            Packet.write(output, new MoveRequest(m >> 1, m & 1, position));
-        } catch (IOException ex) {
+            scheduler.put(new DetachRequest(m));
+        } catch (InterruptedException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
-    public SimpleController(OutputStream output, InputStream input) {
-        this.output = output;
-        this.input = input;
+    public SimpleController(RobotScheduler scheduler) {
+        this.scheduler = scheduler;
         
+        detachButton = new JButton("Detach all");
+        detachButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                for (int i = 0; i < 8; i++) detachMotor(i);
+            }
+        });
         sendUpdatesButton = new JToggleButton("Updates");
         sendUpdatesButton.setSelected(true);
         sendUpdatesButton.addChangeListener(new ChangeListener() {
@@ -116,7 +131,6 @@ public class SimpleController {
             }
         });
         resendButton = new JButton("Send");
-        resendButton.setSelected(true);
         resendButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 resendAll();
@@ -131,6 +145,7 @@ public class SimpleController {
         });
         algorithmField.setColumns(15);
         JPanel globalControls = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        globalControls.add(detachButton);
         globalControls.add(sendUpdatesButton);
         globalControls.add(resendButton);
         globalControls.add(algorithmFieldLabel);
@@ -187,18 +202,29 @@ public class SimpleController {
             System.out.println("Performing algorithm: " + AlgorithmMove.format(moves));
             System.out.println("Pre-mapped algorithm: " + AlgorithmMove.format(preMappedMoves));
 
-            List<Request> requests = mapper.map(moves);
-            for (Request request : requests)
-                Packet.write(output, request);
+            final List<Request> requests = mapper.map(moves);
+            RobotScheduler.ChunkListener listener = new RobotScheduler.ChunkListener() {
+                @Override
+                public void requestComplete(int i, Request req) {
+                    System.out.printf("%4d/%d: %s\n", i+1, requests.size(), req);
+                }
+
+                @Override
+                public void chunkFailed(int i, Request req, Response res) {
+                    System.err.println("Chunk failed at: " + i + " (" + req.getId() + ") " + req + " with " + res.getId());
+                }
+
+                @Override
+                public void chunkComplete() {
+                    System.out.println("Chunk completed.");
+                }
+            };
+            scheduler.put(requests, listener);
             System.out.println("Sending "+requests.size()+" requests.");
             algorithmField.setText("");
 
-            // FIXME: do actual sending in separate class+thread
-            //        wait for ok
-            //        send N ops before reading ok
-            //        send continue at the end
-            //        disable UI while algorithm running
-        } catch (IOException ex) {
+            // FIXME: disable UI while algorithm running
+        } catch (InterruptedException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -208,10 +234,18 @@ public class SimpleController {
      */
     public static void main(String[] args) {
         try {
-            OutputStream output = new FileOutputStream("/dev/ttyACM0");
-            InputStream input = new FileInputStream("/dev/ttyACM0");
-            SimpleController c = new SimpleController(output, input);
-        } catch (FileNotFoundException ex) {
+            InputStream input = new FileInputStream("/dev/ttyACM1");
+            OutputStream output = new FileOutputStream("/dev/ttyACM1");
+            
+            System.out.println("Sending probe to the robot...");
+            Packet.write(output, new ResumeRequest());
+            output.flush();
+            Packet.checkResponse(input);
+            System.out.println("Robot is alive and speaking to us.");
+            
+            RobotScheduler scheduler = new RobotScheduler(input, output, 1);
+            SimpleController c = new SimpleController(scheduler);
+        } catch (FailedResponseException | IOException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

@@ -5,12 +5,15 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.Action;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.twinone.rubiksolver.model.comm.Request;
 
 /**
  *
@@ -21,6 +24,7 @@ public class GripPanel extends JPanel {
     int[] sides;
     SimpleController cnt;
     
+    JButton detach;
     JTextField field;
     JSlider slider;
     JToggleButton toggle;
@@ -28,15 +32,27 @@ public class GripPanel extends JPanel {
     public GripPanel(SimpleController cnt, int[] sides) {
         this.sides = sides;
         this.cnt = cnt;
+        
+        detach = new JButton("D");
         field = new JTextField("0");
         field.setColumns(3);
+        JPanel fieldPanel = new JPanel(new BorderLayout(0, 0));
+        fieldPanel.add(detach, BorderLayout.WEST);
+        fieldPanel.add(field, BorderLayout.CENTER);
+        
         slider = new JSlider(0, 180, 0);
+        
         toggle = new JToggleButton("Grip");
         setLayout(new BorderLayout(5, 5));
-        add(field, BorderLayout.WEST);
+        add(fieldPanel, BorderLayout.WEST);
         add(slider, BorderLayout.CENTER);
         add(toggle, BorderLayout.EAST);
         
+        detach.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                detach();
+            }
+        });
         field.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
@@ -66,12 +82,12 @@ public class GripPanel extends JPanel {
     
     protected void sendMove() {
         for (int s : sides)
-            cnt.setMotorHighLevel((s << 1) | 0, toggle.isSelected() ? 1 : 0);
+            cnt.setMotorHighLevel(Request.getMotor(s, Request.MOTOR_GRIP), toggle.isSelected() ? 1 : 0);
     }
     
     protected void setPosition(int pos) {
         for (int s : sides)
-            cnt.setMotor((s << 1) | 0, pos);
+            cnt.setMotor(Request.getMotor(s, Request.MOTOR_GRIP), pos);
     }
     
     protected void handleUpdate(int m, int pos) {
@@ -82,13 +98,18 @@ public class GripPanel extends JPanel {
         }
     }
     
+    protected void detach() {
+        for (int s : sides)
+            cnt.detachMotor(Request.getMotor(s, Request.MOTOR_GRIP));
+    }
+    
     protected void update(int pos) {
-        for (int side : sides)
-            if (cnt.positions[(side << 1) | 0] != pos) return;
+        for (int s : sides)
+            if (cnt.positions[Request.getMotor(s, Request.MOTOR_GRIP)] != pos) return;
         
         field.setText(String.valueOf(pos));
         slider.setValue(pos);
-        if (sides.length == 1) toggle.setSelected(pos == 180);
+        //if (sides.length == 1) toggle.setSelected(pos == 180);
     }
     
 }
