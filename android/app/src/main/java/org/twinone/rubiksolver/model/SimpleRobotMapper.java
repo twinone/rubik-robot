@@ -1,9 +1,8 @@
 package org.twinone.rubiksolver.model;
 
 import org.twinone.rubiksolver.model.comm.DelayRequest;
-import org.twinone.rubiksolver.model.comm.MoveRequest;
 import org.twinone.rubiksolver.model.comm.Request;
-
+import org.twinone.rubiksolver.model.comm.WriteRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +12,44 @@ import java.util.List;
  */
 public class SimpleRobotMapper {
 
+    //FIXME: accessors for this
+    
+    protected int[] calibrationOffset = {
+        155,  28,
+        157, 150,
+        118, 154,
+        145,  16,
+    };
+
+    // Gripper-specific
+    protected int gripAngle = +20;
+    protected int ungripAngle = -40;
+
+    // Rotation-specific
+    protected int turnAngle = 142;
+    protected int overshootAngle = 20;
+    protected int recoverAngle = -7;
+    
+
+    public WriteRequest gripSide(int side, boolean grip, int offset) {
+        int motor = Request.getMotor(side, Request.MOTOR_GRIP);
+        int position = calibrationOffset[motor] + (grip ? gripAngle : ungripAngle);
+        return moveMotor(motor, position + offset);
+    }
+    
+    public WriteRequest rotateSide(int side, int pos, int offset) {
+        int motor = Request.getMotor(side, Request.MOTOR_ROTATION);
+        int position = calibrationOffset[motor];
+        boolean reverse = (side == 1) || (side == 2);
+        offset *= (pos != 0) ? +1 : -1;
+        if (pos != 0) offset += turnAngle;
+        return moveMotor(motor, position + offset * (reverse ? -1 : +1));
+    }
+    
+    public static WriteRequest moveMotor(int motor, int pos) {
+        return new WriteRequest(motor, Math.max(Math.min(pos, 180), 0));
+    }
+    
     /**
      * Map an algorithm move to other algorithm moves that can be mapped and are equivalent.
      * @return suitable algorithm moves
@@ -41,6 +78,7 @@ public class SimpleRobotMapper {
     protected short delayPerUngrip = 1000;
     protected short delayPerRotation = 1000;
     protected short delayPerFace = 1000;
+    protected short delayPerRecover = 500;
 
     public void setDelayPerGrip(short delayPerGrip) {
         this.delayPerGrip = delayPerGrip;
@@ -56,6 +94,10 @@ public class SimpleRobotMapper {
 
     public void setDelayPerFace(short delayPerFace) {
         this.delayPerFace = delayPerFace;
+    }
+
+    public void setDelayPerRecover(short delayPerRecover) {
+        this.delayPerRecover = delayPerRecover;
     }
 
     public short getDelayPerGrip() {
@@ -74,12 +116,17 @@ public class SimpleRobotMapper {
         return delayPerFace;
     }
 
-    public short calculateDelay(boolean grip, boolean ungrip, boolean rotation, boolean face) {
+    public short getDelayPerRecover() {
+        return delayPerRecover;
+    }
+
+    public short calculateDelay(boolean grip, boolean ungrip, boolean rotation, boolean face, boolean recover) {
         short delay = 0;
         if (grip && delay < delayPerGrip) delay = delayPerGrip;
         if (ungrip && delay < delayPerUngrip) delay = delayPerUngrip;
         if (rotation && delay < delayPerRotation) delay = delayPerRotation;
         if (face && delay < delayPerFace) delay = delayPerFace;
+        if (recover && delay < delayPerRecover) delay = delayPerRecover;
         return delay;
     }
 
@@ -93,11 +140,10 @@ public class SimpleRobotMapper {
      * @return Chunk of backend requests
      */
     public Request[] gripAxis(boolean axis, boolean gripped) {
-        int position = gripped ? 1 : 0;
         return new Request[] {
-                new MoveRequest(axis ? 1 : 0, MoveRequest.MOTOR_GRIP, position),
-                new MoveRequest(axis ? 3 : 2, MoveRequest.MOTOR_GRIP, position),
-                new DelayRequest(calculateDelay(gripped, !gripped, false, false)),
+                gripSide(axis ? 1 : 0, gripped, 0),
+                gripSide(axis ? 3 : 2, gripped, 0),
+                new DelayRequest(calculateDelay(gripped, !gripped, false, false, false)),
         };
     }
 
@@ -109,9 +155,9 @@ public class SimpleRobotMapper {
      */
     public Request[] rotateAxis(boolean axis, int position) {
         return new Request[] {
-                new MoveRequest(axis ? 1 : 0, MoveRequest.MOTOR_ROTATION, position),
-                new MoveRequest(axis ? 3 : 2, MoveRequest.MOTOR_ROTATION, position),
-                new DelayRequest(calculateDelay(false, false, true, false)),
+                rotateSide(axis ? 1 : 0, position, 0),
+                rotateSide(axis ? 3 : 2, position, 0),
+                new DelayRequest(calculateDelay(false, false, true, false, false)),
         };
     }
 
@@ -153,25 +199,27 @@ public class SimpleRobotMapper {
         if (side != -1) {
             if (side == 1 || side == 2) forward = !forward;
             
-            // First chunk: rotate the face
+            // First chunk: rotate the face, overshooting, delay, then recover
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_ROTATION, forward ? 1 : 0),
-                    new DelayRequest(calculateDelay(false, false, false, true)),
+                    rotateSide(side, forward ? 1 : 0, overshootAngle),
+                    new DelayRequest(calculateDelay(false, false, false, true, false)),
+                    rotateSide(side, forward ? 1 : 0, recoverAngle),
+                    new DelayRequest(calculateDelay(false, false, false, false, true)),
             });
             // Second chunk: ungrab the side to reset
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_GRIP, forward ? 0 : 1),
-                    new DelayRequest(calculateDelay(false, true, false, false)),
+                    gripSide(side, forward ? false : true, 0),
+                    new DelayRequest(calculateDelay(false, true, false, false, false)),
             });
             // Third chunk: reset gripper back into position
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_ROTATION, forward ? 0 : 1),
-                    new DelayRequest(calculateDelay(false, false, false, true)),
+                    rotateSide(side, forward ? 0 : 1, 0),
+                    new DelayRequest(calculateDelay(false, false, false, true, false)),
             });
             // Fourth chunk: grab face again
             chunks.add(new Request[] {
-                    new MoveRequest(side, MoveRequest.MOTOR_GRIP, forward ? 1 : 0),
-                    new DelayRequest(calculateDelay(true, false, false, false)),
+                    gripSide(side, forward ? true : false, 0),
+                    new DelayRequest(calculateDelay(true, false, false, false, false)),
             });
         }
 
