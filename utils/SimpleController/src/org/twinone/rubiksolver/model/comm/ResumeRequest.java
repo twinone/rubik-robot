@@ -18,4 +18,9 @@ public class ResumeRequest extends Request {
         return new byte[] { REQUEST_RESUME };
     }
 
+    @Override
+    public String toString() {
+        return "ResumeRequest{" + '}';
+    }
+
 }
