@@ -31,6 +31,7 @@ int servo_pins [8] = {
 #define REQUEST_CALIBRATE 0x10
 #define REQUEST_MOVE 0x11
 #define REQUEST_WRITE 0x12
+#define REQUEST_DETACH 0x13
 
 #define RESPONSE_OK 0x00
 #define RESPONSE_INVALID_COMMAND 0x01
@@ -39,17 +40,13 @@ int servo_pins [8] = {
 // CODE
 
 Servo servos [8];
+boolean servos_attached [8];
 
 boolean processingRequests = true;
 
 void setup() {
   pinMode(13, OUTPUT); //FIXME
   Serial.begin(115200);
-  
-  for (int i = 0; i < 8; i++) {
-    servos[i].attach(servo_pins[i]);
-    servos[i].write(calibration_offset[i]);
-  }
 }
 
 void processRequest() {
@@ -79,6 +76,9 @@ void processRequest() {
       break;
     case REQUEST_WRITE:
       requestWrite(data, length);
+      break;
+    case REQUEST_DETACH:
+      requestDetach(data, length);
       break;
     default:
       emitResponseSimple(RESPONSE_INVALID_COMMAND);
@@ -156,6 +156,10 @@ void requestMove(char *data, int length) {
   } else {
     angle += pos ? grip_angle : ungrip_angle;
   }
+  if (!servos_attached[motor]) {
+    servos[motor].attach(servo_pins[motor]);
+    servos_attached[motor] = true;
+  }
   servos[motor].write(angle);
   emitResponseSimple(RESPONSE_OK);
 }
@@ -172,7 +176,30 @@ void requestWrite(char *data, int length) {
     processingRequests = false;
     return;
   }
+  if (!servos_attached[motor]) {
+    servos[motor].attach(servo_pins[motor]);
+    servos_attached[motor] = true;
+  }
   servos[motor].write(pos);
+  emitResponseSimple(RESPONSE_OK);
+}
+
+void requestDetach(char *data, int length) {
+  if (length != 2) {
+    emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
+    processingRequests = false;
+    return;
+  }
+  int motor = data[1];
+  if (motor < 0 || motor >= 8) {
+    emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
+    processingRequests = false;
+    return;
+  }
+  if (servos_attached[motor]) {
+    servos[motor].detach();
+    servos_attached[motor] = false;
+  }
   emitResponseSimple(RESPONSE_OK);
 }
 
