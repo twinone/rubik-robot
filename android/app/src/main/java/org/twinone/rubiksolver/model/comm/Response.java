@@ -25,7 +25,7 @@ public class Response {
     }
 
     public boolean isOk() {
-        return getId() != RESPONSE_OK;
+        return getId() == RESPONSE_OK;
     }
 
     public static Response decode(byte[] data) {

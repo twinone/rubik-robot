@@ -123,8 +123,8 @@ public class SimpleRobotMapper {
      * **Important:** This method will fail if the supplied move is not one of RBLFXZ or
      * their reverses. To map arbitrary moves, use {@link SimpleRobotMapper#map(Iterable)}
      *
+     * @param requests Resulting requests will be appended to this list.
      * @param move Move to map
-     * @return Backend requests for this move
      */
     public void map(List<Request> requests, AlgorithmMove move) {
         List<Request[]> chunks = new ArrayList<>();
@@ -175,8 +175,7 @@ public class SimpleRobotMapper {
             });
         }
 
-        // TODO: how the fuck can this work. should be if (!forward)??
-        if (move.reverse) Collections.reverse(chunks);
+        if (!forward) Collections.reverse(chunks);
         for (Request[] chunk : chunks)
             Collections.addAll(requests, chunk);
     }

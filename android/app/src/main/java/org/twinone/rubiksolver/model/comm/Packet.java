@@ -32,10 +32,20 @@ public class Packet {
      * Read next packet as a response, from the input stream, and verify success.
      * @return next decoded response
      */
-    public static Response readResponse(InputStream stream) throws FailedResponseException, IOException {
-        Response response = Response.decode(read(stream));
+    public static Response readResponse(InputStream stream) throws IOException {
+        return Response.decode(read(stream));
+    }
+    
+    /**
+     * Read next packet as a response and check it's successful.
+     * If it's a failed response, an exception will be thrown.
+     * @param stream
+     * @throws IOException
+     * @throws FailedResponseException 
+     */
+    public static void checkResponse(InputStream stream) throws IOException, FailedResponseException {
+        Response response = readResponse(stream);
         if (!response.isOk()) throw new FailedResponseException(response);
-        return response;
     }
 
     /**
