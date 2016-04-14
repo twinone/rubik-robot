@@ -28,4 +28,9 @@ public class BufferRequest extends Request {
         return new byte[] { REQUEST_BUFFER, (byte) peek};
     }
 
+    @Override
+    public String toString() {
+        return "BufferRequest{" + "peek=" + peek + '}';
+    }
+
 }

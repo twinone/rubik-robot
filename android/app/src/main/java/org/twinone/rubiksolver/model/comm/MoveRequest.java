@@ -57,4 +57,9 @@ public class MoveRequest extends Request {
         return new byte[] { REQUEST_MOVE, (byte) (side << 1 | motor), (byte) position};
     }
 
+    @Override
+    public String toString() {
+        return "MoveRequest{" + "side=" + side + ", motor=" + motor + ", position=" + position + '}';
+    }
+    
 }

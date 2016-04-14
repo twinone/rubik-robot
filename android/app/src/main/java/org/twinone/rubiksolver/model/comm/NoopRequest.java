@@ -18,4 +18,9 @@ public class NoopRequest extends Request {
         return new byte[] { REQUEST_NOOP };
     }
 
+    @Override
+    public String toString() {
+        return "NoopRequest{" + '}';
+    }
+
 }

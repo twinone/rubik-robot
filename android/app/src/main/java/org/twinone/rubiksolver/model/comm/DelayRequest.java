@@ -33,4 +33,9 @@ public class DelayRequest extends Request {
         return data.array();
     }
 
+    @Override
+    public String toString() {
+        return "DelayRequest{" + "delay=" + delay + '}';
+    }
+    
 }

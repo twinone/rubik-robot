@@ -45,4 +45,9 @@ public class WriteRequest extends Request {
         return new byte[] { REQUEST_WRITE, (byte) (side << 1 | motor), (byte) position};
     }
 
+    @Override
+    public String toString() {
+        return "WriteRequest{" + "side=" + side + ", motor=" + motor + ", position=" + position + '}';
+    }
+
 }
