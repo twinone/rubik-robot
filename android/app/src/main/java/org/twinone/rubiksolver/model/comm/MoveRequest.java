@@ -8,21 +8,8 @@ import java.nio.ByteOrder;
  */
 public class MoveRequest extends Request {
 
-    public static final int SIDE_RIGHT = 0;
-    public static final int SIDE_UP = 1;
-    public static final int SIDE_LEFT = 2;
-    public static final int SIDE_DOWN = 3;
-
-    public static final int MOTOR_GRIP = 0;
-    public static final int MOTOR_ROTATION = 1;
-
-    private final int side;
     private final int motor;
     private final int position;
-
-    public int getSide() {
-        return side;
-    }
 
     public int getMotor() {
         return motor;
@@ -38,11 +25,8 @@ public class MoveRequest extends Request {
         return position;
     }
 
-    public MoveRequest(int side, int motor, int position) {
-        if (side < 0 || side >= 4) throw new IllegalArgumentException("Invalid side specified");
-        if (motor < 0 || motor >= 2) throw new IllegalArgumentException("Invalid motor specified");
+    public MoveRequest(int motor, int position) {
         if (position < 0 || position >= 2) throw new IllegalArgumentException("Invalid position specified");
-        this.side = side;
         this.motor = motor;
         this.position = position;
     }
@@ -54,12 +38,12 @@ public class MoveRequest extends Request {
 
     @Override
     public byte[] encode() {
-        return new byte[] { REQUEST_MOVE, (byte) (side << 1 | motor), (byte) position};
+        return new byte[] { REQUEST_MOVE, (byte) motor, (byte) position};
     }
 
     @Override
     public String toString() {
-        return "MoveRequest{" + "side=" + side + ", motor=" + motor + ", position=" + position + '}';
+        return "MoveRequest{" + "motor=" + motor + ", position=" + position + '}';
     }
     
 }
