@@ -11,9 +11,8 @@ public abstract class Request {
     public static final byte REQUEST_BUFFER = 0x03;
 
     public static final byte REQUEST_CALIBRATE = 0x10;
-    public static final byte REQUEST_MOVE = 0x11;
+    public static final byte REQUEST_DETACH = 0x11;
     public static final byte REQUEST_WRITE = 0x12;
-    public static final byte REQUEST_DETACH = 0x13;
 
     public abstract byte getId();
 

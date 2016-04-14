@@ -2,21 +2,6 @@
 
 // MOTOR PARAMS
 
-int calibration_offset [8] = {
-  118,  25,
-  129, 170,
-   67, 160,
-   81,  18,
-};
-
-int grip_angle = +20;
-int ungrip_angle = -40;
-int turn_angle = 142;
-
-int calibration_reverse [4] = {
-  0, 1, 1, 0,
-};
-
 int servo_pins [8] = {
   2,3,4,5,6,7,8,9
 };
@@ -29,9 +14,8 @@ int servo_pins [8] = {
 #define REQUEST_BUFFER 0x03
 
 #define REQUEST_CALIBRATE 0x10
-#define REQUEST_MOVE 0x11
+#define REQUEST_DETACH 0x11
 #define REQUEST_WRITE 0x12
-#define REQUEST_DETACH 0x13
 
 #define RESPONSE_OK 0x00
 #define RESPONSE_INVALID_COMMAND 0x01
@@ -71,14 +55,11 @@ void processRequest() {
     case REQUEST_BUFFER:
       requestBuffer(data, length);
       break;
-    case REQUEST_MOVE:
-      requestMove(data, length);
+    case REQUEST_DETACH:
+      requestDetach(data, length);
       break;
     case REQUEST_WRITE:
       requestWrite(data, length);
-      break;
-    case REQUEST_DETACH:
-      requestDetach(data, length);
       break;
     default:
       emitResponseSimple(RESPONSE_INVALID_COMMAND);
@@ -138,29 +119,22 @@ void requestBuffer(char *data, int length) {
   emitResponseSimple(RESPONSE_OK);
 }
 
-void requestMove(char *data, int length) {
-  if (length != 3) {
+void requestDetach(char *data, int length) {
+  if (length != 2) {
     emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
     processingRequests = false;
     return;
   }
-  int motor = data[1], pos = data[2];
-  if (motor < 0 || motor >= 8 || pos < 0 || pos >= 2) {
+  int motor = data[1];
+  if (motor < 0 || motor >= 8) {
     emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
     processingRequests = false;
     return;
   }
-  int angle = calibration_offset[motor];
-  if (motor & 1) {
-    angle += (pos ? turn_angle : 0) * (calibration_reverse[motor >> 1] ? -1 : +1);
-  } else {
-    angle += pos ? grip_angle : ungrip_angle;
+  if (servos_attached[motor]) {
+    servos[motor].detach();
+    servos_attached[motor] = false;
   }
-  if (!servos_attached[motor]) {
-    servos[motor].attach(servo_pins[motor]);
-    servos_attached[motor] = true;
-  }
-  servos[motor].write(angle);
   emitResponseSimple(RESPONSE_OK);
 }
 
@@ -181,25 +155,6 @@ void requestWrite(char *data, int length) {
     servos_attached[motor] = true;
   }
   servos[motor].write(pos);
-  emitResponseSimple(RESPONSE_OK);
-}
-
-void requestDetach(char *data, int length) {
-  if (length != 2) {
-    emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
-    processingRequests = false;
-    return;
-  }
-  int motor = data[1];
-  if (motor < 0 || motor >= 8) {
-    emitResponseSimple(RESPONSE_INVALID_ARGUMENT);
-    processingRequests = false;
-    return;
-  }
-  if (servos_attached[motor]) {
-    servos[motor].detach();
-    servos_attached[motor] = false;
-  }
   emitResponseSimple(RESPONSE_OK);
 }
 
