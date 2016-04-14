@@ -14,10 +14,11 @@ public class Packet {
 
     /**
      * Read next packet from input stream.
-     * @return next packet data
+     * @return next packet data, or null if EOF reached
      */
     public static byte[] read(InputStream stream) throws IOException {
         int length = stream.read();
+        if (length == -1) return null;
         byte[] data = new byte[length];
         int read = 0;
         while (read < length) {
@@ -30,10 +31,12 @@ public class Packet {
 
     /**
      * Read next packet as a response, from the input stream, and verify success.
-     * @return next decoded response
+     * @return next decoded response, or null if EOF reached
      */
     public static Response readResponse(InputStream stream) throws IOException {
-        return Response.decode(read(stream));
+        byte[] data = read(stream);
+        if (data == null) return null;
+        return Response.decode(data);
     }
     
     /**
@@ -45,7 +48,7 @@ public class Packet {
      */
     public static void checkResponse(InputStream stream) throws IOException, FailedResponseException {
         Response response = readResponse(stream);
-        if (!response.isOk()) throw new FailedResponseException(response);
+        if (response == null || !response.isOk()) throw new FailedResponseException(response);
     }
 
     /**
