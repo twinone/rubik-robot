@@ -3,6 +3,7 @@ package org.twinone.rubiksolver.model;
 import org.twinone.rubiksolver.model.comm.DelayRequest;
 import org.twinone.rubiksolver.model.comm.Request;
 import org.twinone.rubiksolver.model.comm.WriteRequest;
+import org.twinone.rubiksolver.model.comm.DetachRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,9 +17,9 @@ public class SimpleRobotMapper {
     
     protected int[] calibrationOffset = {
         155,  28,
-        157, 150,
-        118, 154,
-        145,  16,
+        157, 161,
+        118, 155,
+        145,  20,
     };
 
     // Gripper-specific

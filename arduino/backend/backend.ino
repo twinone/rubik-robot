@@ -30,7 +30,7 @@ boolean processingRequests = true;
 
 void setup() {
   pinMode(13, OUTPUT); //FIXME
-  Serial.begin(115200);
+  Serial.begin(9600);// 115200);
 }
 
 void processRequest() {
