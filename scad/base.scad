@@ -2,8 +2,8 @@ use <scad-utils/morphology.scad>
 use <gripper/gripper.scad>
 use <gripper/buildvars.scad>
 use <gripper/gear.scad>
-use <gripper/servo.scad>
-use <gripper/servo_horn_enclosing.scad>
+use <gripper/micro_servo.scad>
+use <gripper/micro_servo_horn_enclosing.scad>
 use <gripper/arm.scad>
 
 
