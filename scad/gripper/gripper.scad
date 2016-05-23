@@ -185,13 +185,13 @@ module turner() {
     }
 }
 
-module turner_screws(h) {
+module turner_screws(h, r=screw_r()) {
     sdst = 4;
     n = 3;
     for (i = [0:n-1])
     rotate(360/n*i)
     translate([sdst,0,0])
-    cylinder(r=screw_r(),h=h);
+    cylinder(r=r,h=h);
 }
 
 module display_turner() {

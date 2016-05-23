@@ -3,6 +3,7 @@ use <gripper/gripper.scad>
 use <gripper/buildvars.scad>
 use <gripper/gear.scad>
 use <gripper/micro_servo.scad>
+use <gripper/big_servo_enclosing.scad>
 use <gripper/micro_servo_horn_enclosing.scad>
 use <gripper/arm.scad>
 
@@ -15,11 +16,11 @@ function holder_th() = 8;
 function holder_w() = gripper_r()*2+holder_th()*2;
 function holder_dst() = 183;
 
-function gears_c2c() = 20;
-function gear_conversion_factor() = 0.67;
+function gears_c2c() = 36;
+function gear_conversion_factor() = 1; // old = 0.67;
 function gear_round() = true;
 
-function base_r() = (gears_c2c()-2)/2;
+function base_r() = (gears_c2c()-3)/2;
 function servo_gear_f() = 2/(gear_conversion_factor()+1)*gear_conversion_factor();
 function turn_gear_f() = 2-servo_gear_f();
 function turn_gear_r() = base_r() * turn_gear_f();
@@ -132,7 +133,7 @@ module holder_bottom() {
 }
 
 
-module servo_adapter(th1, th2, eh=3) {
+module servo_adapter(th1, th2, eh=3, extra=15) {
     pad = .4;
     r = 19.9 / 2;
     d = r*2 + pad;
@@ -140,29 +141,29 @@ module servo_adapter(th1, th2, eh=3) {
     w2 = 54 + pad;
     sw = (w2-w1)/2;
     h2 = 49; // height with horn inserted
-    screw_r = 1;
-    screw_d = 4;
-    
-    translate([-d/2-th1,-w2/2-th2-w1/2+r,0])
-    difference() {
-        cube([d,w2,eh]+[th1,th2,0]*2);
-        translate([0,sw,0]+[th1,th2,0])
-        cube([d,w1,eh]);
+    screw_r = .7;
+        screw_d = 4;
         
-        translate([th1,th2+sw/2,0]+[screw_d,0,0]) cylinder(r=screw_r, h=eh);
-        translate([th1,th2+sw/2,0]+[d-screw_d,0,0]) cylinder(r=screw_r, h=eh);
-        translate([0,w1+sw,0]) {
+        translate([-d/2-th1,-w2/2-th2-w1/2+r,0])
+        difference() {
+            cube([d,w2+extra,eh]+[th1,th2,0]*2);
+            translate([0,sw,0]+[th1,th2,0])
+            cube([d,w1,eh]);
+            
             translate([th1,th2+sw/2,0]+[screw_d,0,0]) cylinder(r=screw_r, h=eh);
             translate([th1,th2+sw/2,0]+[d-screw_d,0,0]) cylinder(r=screw_r, h=eh);
+            translate([0,w1+sw,0]) {
+                translate([th1,th2+sw/2,0]+[screw_d,0,0]) cylinder(r=screw_r, h=eh);
+                translate([th1,th2+sw/2,0]+[d-screw_d,0,0]) cylinder(r=screw_r, h=eh);
+            }
         }
+        
     }
-    
-}
 
 
-module holder_top() {
-    th = holder_th();
-    r = gripper_r() + tolerance()*4;
+    module holder_top() {
+        th = holder_th();
+        r = gripper_r() + tolerance()*2;
     w = holder_w();
     h = r+th;
     bth = th;
@@ -195,30 +196,13 @@ module holder_top() {
             }
         }
     }
-    module base() {
-        total_w = holder_d();
-        esw = (total_w-5)/2;
-        pad=1.5;
-        
-        m1 = esw+pad/2;
-        m2 = esw+5-pad/2;
-        difference() {
-            shape(r, eh=m1);
-//            translate([w/2,h-gears_c2c(),-1])
-//            cylinder(r=enclosing_dst_small()+5,h=servo_base_height()+1);
-        }
-        
-        translate([0,0,m1])
-        shape(r-1.5,eh=m2-m1);
-        translate([0,0,m2])
-        shape(r, eh=total_w-m2);       
-    }
     
     sw=3;
-    module holder(n) {
-        translate([w/2,-gears_c2c()+h,-servo_base_height()*(n+-2)+servo_elevation()-1])
+    module holder() {
+        translate([w/2,-gears_c2c()+h,-servo_base_height()+servo_elevation()-1])
         rotate(0)
-        servo_support(w=sw);
+        //servo_support(w=sw);
+        servo_adapter(th1=5, th2=2, eh=8);
     }
     
     cw = servo_d();
@@ -226,20 +210,17 @@ module holder_top() {
     translate([holder_d(),0,holder_h()+h])
     rotate([-90,0,90]){
         difference() {
-            base();
-            // vertical
-//            translate([w/2-cw/2,h-gears_c2c()-servo_long2(),0])
-//            cube([cw,servo_w2()+tolerance()*6,holder_d()+100]);
-            // horizontal
-            translate([w/2-servo_long2(),h-gears_c2c()-servo_r()-tolerance(),0])
-            cube([servo_w2(),servo_d()+tolerance()*2,holder_d()+100]);
+            union(){        holder();
+
+            shape(r, eh=holder_d());
+            }
+            translate([holder_w()/2,h])
+            cylinder(r=r, h=holder_d());
         }
         translate([0,h,0])
         mirror([0,1,0])
         4screws(hh=0);
         
-        holder(3);
-        holder(2);
     }
 }
 
@@ -255,20 +236,21 @@ module servo_gear() {
 //                arm(length=enclosing_dst_small(), r=arm_width()/2);
 //            }
             rotate(360/30/2)
-            remove_servo_horn(horns=[true,false,true,false])
-            gear(r=servo_gear_r(), teeth=15*servo_gear_f(), h = 4,teeth_h=1/servo_gear_f(),round=gear_round());
+            big_remove_enclosing(h=gear_h)
+            gear(r=servo_gear_r(), teeth=15*servo_gear_f(), h = gear_h,teeth_h=1/servo_gear_f(),round=gear_round());
         //}
 
     }
 }
 
+gear_h = 7;
 servo_gear_angle = 70;
 module turner_gear() {
     //rotate([0,90,0])
     rotate(360/30/2)
     difference() {
-        gear(r=turn_gear_r(), teeth=15*turn_gear_f(), h = 4,teeth_h=1/turn_gear_f(),round=gear_round());
-        turner_screws(10);
+        gear(r=turn_gear_r(), teeth=15*turn_gear_f(), h = gear_h,teeth_h=1/turn_gear_f(),round=gear_round());
+        turner_screws(gear_h*2, $fn=20);
     }
 }
 
@@ -435,5 +417,8 @@ module print() {
 
 }
 
-display4();
+turner_gear();
+
+//holder_top($fn=50);
+//display4();
 // print();
