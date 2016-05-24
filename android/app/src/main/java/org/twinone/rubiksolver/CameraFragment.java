@@ -1,15 +1,18 @@
 package org.twinone.rubiksolver;
 
+import android.Manifest;
 import android.app.Fragment;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.ValueCallback;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -43,29 +46,60 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     private FaceCapturer mFaceCapturer;
     private Button mButtonCapture;
-    private WebCube mWebCube;
+    private CubeWebView mCubeWebView;
 
     private RelativeLayout mRootView;
     private CapturedFace[] mCapturedFaces = new CapturedFace[6];
     private TextView[][] mSquare = new TextView[MainActivity.SIZE][MainActivity.SIZE];
     private int mCurrentCapturingFaceId = 0;
 
+    private static final int REQUEST_ID = 1;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-
+        checkPermissions();
         mRootView = (RelativeLayout) inflater.inflate(R.layout.fragment_camera, null);
 
         setupSquares();
         mButtonCapture = (Button) mRootView.findViewById(R.id.button_capture);
         mButtonCapture.setOnClickListener(this);
-        mFaceCapturer = new FaceCapturer(this);
+
+
+        // TODO request runtime permissions
+        //mFaceCapturer = new FaceCapturer(this);
+
 //        mFrameLayout = (FrameLayout) mRootView.findViewById(R.id.frame_layout);
-        mWebCube = new WebCube(this.getActivity());
-        //mRootView.addView(mWebCube);
+        mCubeWebView = new CubeWebView(this.getActivity());
+        mCubeWebView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mRootView.addView(mCubeWebView);
         return mRootView;
+    }
+
+
+    /*
+     * @return true if the permissions are granted
+     */
+    private boolean checkPermissions() {
+        if (ContextCompat.checkSelfPermission(getActivity(),
+                Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.CAMERA},
+                    REQUEST_ID);
+            return false;
+        }
+
+        //mFaceCapturer = new FaceCapturer(this);
+
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        checkPermissions();
     }
 
     private void setupSquares() {
@@ -102,14 +136,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     @Override
     public void onStart() {
         super.onStart();
-        mFaceCapturer.start();
+        if (mFaceCapturer != null) mFaceCapturer.start();
     }
 
 
     @Override
     public void onStop() {
         super.onStop();
-        mFaceCapturer.stop();
+        if (mFaceCapturer != null)
+            mFaceCapturer.stop();
     }
 
     @Override
@@ -152,18 +187,18 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 return;
             }
             Log.d(TAG, "State: https://twinone.github.io/rubik-solver/web/?state="+String.valueOf(state));
-            mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
-                @Override
-                public void onReceiveValue(String value) {
-                    if (value.equals("null")) {
-                        Log.e(TAG, "Unsolvable state, or scanning failed.");
-                        return;
-                    }
-
-                    String alg = value.substring(1,value.length()-1); //FIXME: crappy
-                    handleAlgorithm(alg);
-                }
-            });
+//            mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
+//                @Override
+//                public void onReceiveValue(String value) {
+//                    if (value.equals("null")) {
+//                        Log.e(TAG, "Unsolvable state, or scanning failed.");
+//                        return;
+//                    }
+//
+//                    String alg = value.substring(1,value.length()-1); //FIXME: crappy
+//                    handleAlgorithm(alg);
+//                }
+//            });
         }
     }
 
