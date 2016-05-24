@@ -73,7 +73,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 //        mFrameLayout = (FrameLayout) mRootView.findViewById(R.id.frame_layout);
         mCubeWebView = new CubeWebView(this.getActivity());
         mCubeWebView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        mRootView.addView(mCubeWebView);
+
         return mRootView;
     }
 
@@ -147,11 +147,19 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             mFaceCapturer.stop();
     }
 
+    boolean a = false;
+
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.button_capture) {
-           // mFaceCapturer.capture(mCurrentCapturingFaceId, this);
-            mCubeWebView.js("setState", "UUUUUULLLLLDLLDLLDFFFFFFFFFURRURRURRBBBBBBBBBRRRDDDDDD");
+//           mFaceCapturer.capture(mCurrentCapturingFaceId, this);
+            if (!a) {
+                mRootView.addView(mCubeWebView);
+                a = true;
+            } else {
+
+
+            }
         }
     }
 
@@ -187,7 +195,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 Log.e(TAG, "Invalid state, scanning didn't work out well.");
                 return;
             }
-            Log.d(TAG, "State: https://twinone.github.io/rubik-solver/web/?state="+String.valueOf(state));
+            Log.d(TAG, "State: https://twinone.github.io/rubik-solver/web/?state=" + String.valueOf(state));
+            mRootView.addView(mCubeWebView);
 //            mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
 //                @Override
 //                public void onReceiveValue(String value) {
@@ -302,12 +311,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     public void handleAlgorithm(String alg) {
         List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
-        Log.d(TAG, "Solve (" + moves.size() + "): "+alg);
+        Log.d(TAG, "Solve (" + moves.size() + "): " + alg);
 
         List<AlgorithmMove> preMappedMoves = new ArrayList<>();
         for (AlgorithmMove move : moves)
             Collections.addAll(preMappedMoves, SimpleRobotMapper.preMap(move));
-        Log.d(TAG, "Pre-mapped moves (" + preMappedMoves.size() + "): "+AlgorithmMove.format(preMappedMoves));
+        Log.d(TAG, "Pre-mapped moves (" + preMappedMoves.size() + "): " + AlgorithmMove.format(preMappedMoves));
 
         SimpleRobotMapper mapper = new SimpleRobotMapper();
         List<Request> requests = mapper.map(moves);
@@ -319,7 +328,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             }
         }
         time /= 1000;
-        Log.d(TAG, "Translated into "+requests.size()+" backend requests.\nTheoretical execution time is "+(time/60)+":"+(time%60)+" across "+delays+" delays.");
+        Log.d(TAG, "Translated into " + requests.size() + " backend requests.\nTheoretical execution time is " + (time / 60) + ":" + (time % 60) + " across " + delays + " delays.");
     }
 
 }

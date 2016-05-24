@@ -11,7 +11,7 @@ import android.webkit.WebViewClient;
 /**
  * Created by xavier on 06/04/16.
  */
-public class CubeWebView extends WebView {
+public class CubeWebView extends JSWebView {
 
     public CubeWebView(Context context) {
         this(context, null);
@@ -26,49 +26,15 @@ public class CubeWebView extends WebView {
         }
         getSettings().setJavaScriptEnabled(true);
         addJavascriptInterface(this, "Android");
+
         String url = "file:///android_asset/web/index.html";
-        if (state != null) url += "?state="+state;
+        if (state != null) url += "?state=" + state;
         loadUrl(url);
-        setWebViewClient(new WebViewClient(){
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                
-                js("setState", "UUUUUULLLLLDLLDLLDFFFFFFFFFURRURRURRBBBBBBBBBRRRDDDDDD");
-            }
-        });
     }
 
-
-    /**
-     * @See http://stackoverflow.com/questions/4325639/android-calling-javascript-functions-in-webview
-     */
-    public void js(String methodName, Object...params){
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("javascript:try{cube.");
-        stringBuilder.append(methodName);
-        stringBuilder.append("(");
-        String separator = "";
-        for (Object param : params) {
-            stringBuilder.append(separator);
-            separator = ",";
-            if(param instanceof String){
-                stringBuilder.append("'");
-            }
-            stringBuilder.append(param);
-            if(param instanceof String){
-                stringBuilder.append("'");
-            }
-
-        }
-        stringBuilder.append(")}catch(error){console.error(error.message);}");
-        final String call = stringBuilder.toString();
-        Log.i("CubeWebView", "callJavaScript: call="+call);
-
-
-        loadUrl(call);
+    public Object cube(String methodName, Object... params) {
+        return javaScript("cube." + methodName, params);
     }
-
 
 
 }
