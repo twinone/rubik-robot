@@ -70,10 +70,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         // TODO request runtime permissions
         //mFaceCapturer = new FaceCapturer(this);
 
-//        mFrameLayout = (FrameLayout) mRootView.findViewById(R.id.frame_layout);
-        mCubeWebView = new CubeWebView(this.getActivity());
-        mCubeWebView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
         return mRootView;
     }
 
@@ -147,19 +143,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             mFaceCapturer.stop();
     }
 
-    boolean a = false;
-
     @Override
     public void onClick(View v) {
+        mCubeWebView = new CubeWebView(this.getActivity());
+        mCubeWebView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        mRootView.addView(mCubeWebView);
+
         if (v.getId() == R.id.button_capture) {
 //           mFaceCapturer.capture(mCurrentCapturingFaceId, this);
-            if (!a) {
-                mRootView.addView(mCubeWebView);
-                a = true;
-            } else {
-
-
-            }
         }
     }
 
