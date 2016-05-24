@@ -150,7 +150,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.button_capture) {
-            mFaceCapturer.capture(mCurrentCapturingFaceId, this);
+           // mFaceCapturer.capture(mCurrentCapturingFaceId, this);
+            mCubeWebView.js("setState", "UUUUUULLLLLDLLDLLDFFFFFFFFFURRURRURRBBBBBBBBBRRRDDDDDD");
         }
     }
 
