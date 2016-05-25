@@ -16,21 +16,22 @@ public class SimpleRobotMapper {
     //FIXME: accessors for this
     
     protected int[] calibrationOffset = {
-        155,  28,
-        157, 161,
-        118, 155,
-        145,  20,
+        138,  46,
+        146, 119,
+         98, 123,
+        150,  24,
     };
 
     // Gripper-specific
-    protected int gripAngle = +20;
+    protected int gripAngle = +30;
     protected int ungripAngle = -40;
 
     // Rotation-specific
-    protected int turnAngle = 142;
-    protected int overshootAngle = 20;
-    protected int recoverAngle = -7;
-    
+    protected int turnAngleFB = 103;
+    protected int turnAngleRL = 103;
+    protected int overshootAngle = 5;
+    protected int recoverAngle = -10;
+
 
     public WriteRequest gripSide(int side, boolean grip, int offset) {
         int motor = Request.getMotor(side, Request.MOTOR_GRIP);
@@ -43,7 +44,7 @@ public class SimpleRobotMapper {
         int position = calibrationOffset[motor];
         boolean reverse = (side == 1) || (side == 2);
         offset *= (pos != 0) ? +1 : -1;
-        if (pos != 0) offset += turnAngle;
+        if (pos != 0) offset += (side % 2 == 0) ? turnAngleRL : turnAngleFB;
         return moveMotor(motor, position + offset * (reverse ? -1 : +1));
     }
     
@@ -69,17 +70,24 @@ public class SimpleRobotMapper {
             return result.toArray(new AlgorithmMove[0]);
         }
         
+//        //FIXME: hack
+        if (move.face == 'R') {
+            List<AlgorithmMove> result = AlgorithmMove.parse("Z X F X' Z'");
+            result.get(2).reverse = move.reverse;
+            return result.toArray(new AlgorithmMove[0]);
+        }
+        
         if ("RBLFXZ".indexOf(move.face) != -1)
             return new AlgorithmMove[] {move};
 
         throw new IllegalArgumentException("Unknown move");
     }
 
-    protected short delayPerGrip = 1000;
-    protected short delayPerUngrip = 1000;
-    protected short delayPerRotation = 1000;
-    protected short delayPerFace = 1000;
-    protected short delayPerRecover = 500;
+    protected short delayPerGrip = 250;
+    protected short delayPerUngrip = 250;
+    protected short delayPerRotation = 500;
+    protected short delayPerFace = 800;
+    protected short delayPerRecover = 200;
 
     public void setDelayPerGrip(short delayPerGrip) {
         this.delayPerGrip = delayPerGrip;

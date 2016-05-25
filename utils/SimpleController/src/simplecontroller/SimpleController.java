@@ -21,6 +21,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
@@ -28,6 +29,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.twinone.rubiksolver.model.AlgorithmMove;
 import org.twinone.rubiksolver.model.SimpleRobotMapper;
+import org.twinone.rubiksolver.model.SlightlyMoreAdvancedMapper;
+import org.twinone.rubiksolver.model.comm.DelayRequest;
 import org.twinone.rubiksolver.model.comm.DetachRequest;
 import org.twinone.rubiksolver.model.comm.FailedResponseException;
 import org.twinone.rubiksolver.model.comm.Packet;
@@ -44,6 +47,7 @@ public class SimpleController {
 
     RobotScheduler scheduler;
     SimpleRobotMapper mapper = new SimpleRobotMapper();
+    SlightlyMoreAdvancedMapper mapper2 = new SlightlyMoreAdvancedMapper();
     
     JFrame frame;
     
@@ -64,6 +68,7 @@ public class SimpleController {
     // Robot communication
     boolean sendingUpdates = true;
     int positions[] = new int[] { -1, -1, -1, -1, -1, -1, -1, -1 };
+    private final JProgressBar algorithmProgressBar;
     static public interface MotorChangeListener {
         void onMotorChanged(int m, int p);
     }
@@ -144,12 +149,14 @@ public class SimpleController {
             }
         });
         algorithmField.setColumns(15);
+        algorithmProgressBar = new JProgressBar();
         JPanel globalControls = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
         globalControls.add(detachButton);
         globalControls.add(sendUpdatesButton);
         globalControls.add(resendButton);
         globalControls.add(algorithmFieldLabel);
         globalControls.add(algorithmField);
+        globalControls.add(algorithmProgressBar);
         // FIXME: allow mapper delays to be changed
         
         JLabel servoControlLabel = new JLabel("Individual servo control");
@@ -203,19 +210,31 @@ public class SimpleController {
             System.out.println("Pre-mapped algorithm: " + AlgorithmMove.format(preMappedMoves));
 
             final List<Request> requests = mapper.map(moves);
+            
+            int totalTime = 0;
+            for (Request r : requests)
+                if (r instanceof DelayRequest) totalTime += ((DelayRequest)r).getDelay();
+            System.out.printf("Theorical time:\n - total: %dms\n - per move: %dms\n - per pre-mapped move: %dms\n", totalTime, totalTime/moves.size(), totalTime/preMappedMoves.size());
+            totalTime = (int) Math.round(totalTime / 1000.0);
+            System.out.printf("Theorical time: %d:%02d\n", (int)Math.floor(totalTime/60), (int)totalTime % 60);
+            
+            algorithmProgressBar.setMaximum(requests.size());
             RobotScheduler.ChunkListener listener = new RobotScheduler.ChunkListener() {
                 @Override
                 public void requestComplete(int i, Request req) {
+                    algorithmProgressBar.setValue(i+1);
                     System.out.printf("%4d/%d: %s\n", i+1, requests.size(), req);
                 }
 
                 @Override
                 public void chunkFailed(int i, Request req, Response res) {
+                    algorithmProgressBar.setValue(i+1);
                     System.err.println("Chunk failed at: " + i + " (" + req.getId() + ") " + req + " with " + res.getId());
                 }
 
                 @Override
                 public void chunkComplete() {
+                    algorithmProgressBar.setValue(0);
                     System.out.println("Chunk completed.");
                 }
             };
@@ -240,15 +259,17 @@ public class SimpleController {
             OutputStream output = new FileOutputStream(dev);
             
             System.out.println("Sending probe to the robot...");
-            Packet.write(output, new ResumeRequest());
-            output.flush();
-            Packet.checkResponse(input);
+            //hPacket.write(output, new ResumeRequest());
+            //output.flush();
+            //Packet.checkResponse(input);
             System.out.println("Robot is alive and speaking to us.");
             
             RobotScheduler scheduler = new RobotScheduler(input, output, 1);
             SimpleController c = new SimpleController(scheduler);
-        } catch (FailedResponseException | IOException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
+        //} catch (FailedResponseException ex) {
+        //    Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
