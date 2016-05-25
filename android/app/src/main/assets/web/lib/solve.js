@@ -779,4 +779,4 @@
     return Cube.inverse(Cube.random().solve());
   };
 
-}).call(this);
+}).call(Lib);
