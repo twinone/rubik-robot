@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -88,7 +90,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             return false;
         }
 
-        //mFaceCapturer = new FaceCapturer(this);
+        mFaceCapturer = new FaceCapturer(this);
 
         return true;
     }
@@ -143,15 +145,36 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             mFaceCapturer.stop();
     }
 
-    @Override
-    public void onClick(View v) {
-        mCubeWebView = new CubeWebView(this.getActivity());
+    private void initCubeWebView(String state) {
+        Log.d(TAG, "State: " + state);
+        if (mCubeWebView != null) return;
+        mCubeWebView = new CubeWebView(this.getActivity(), state);
         mCubeWebView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mCubeWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                onCubeWebViewReady();
+            }
+        });
 
         mRootView.addView(mCubeWebView);
+    }
 
+    private void onAllFacesCaptured(String state) {
+        Log.d("Hi", "done");
+    }
+
+    private void onCubeWebViewReady() {
+        String moves = (String) mCubeWebView.javaScript("solve", "RRFLUDLRLDUDULBUFBFFFLFDLBUULRRRRLLDUBFUBFRURDDBDDFBBB");
+        Log.d(TAG, "Moves:" + moves);
+
+    }
+
+    @Override
+    public void onClick(View v) {
         if (v.getId() == R.id.button_capture) {
-//           mFaceCapturer.capture(mCurrentCapturingFaceId, this);
+            mFaceCapturer.capture(mCurrentCapturingFaceId, this);
         }
     }
 
@@ -187,20 +210,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 Log.e(TAG, "Invalid state, scanning didn't work out well.");
                 return;
             }
-            Log.d(TAG, "State: https://twinone.github.io/rubik-solver/web/?state=" + String.valueOf(state));
-            mRootView.addView(mCubeWebView);
-//            mWebCube.optimizedSolve(String.valueOf(state), new ValueCallback<String>() {
-//                @Override
-//                public void onReceiveValue(String value) {
-//                    if (value.equals("null")) {
-//                        Log.e(TAG, "Unsolvable state, or scanning failed.");
-//                        return;
-//                    }
-//
-//                    String alg = value.substring(1,value.length()-1); //FIXME: crappy
-//                    handleAlgorithm(alg);
-//                }
-//            });
+
+            initCubeWebView(new String(state));
         }
     }
 
