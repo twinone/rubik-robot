@@ -56,9 +56,6 @@ public class SimpleRobotMapper {
      * @return suitable algorithm moves
      */
     public static AlgorithmMove[] preMap(AlgorithmMove move) {
-        if ("RBLFXZ".indexOf(move.face) != -1)
-            return new AlgorithmMove[] {move};
-
         if (move.face == 'Y') {
             List<AlgorithmMove> result = AlgorithmMove.parse("X Z' X'");
             result.get(1).reverse = !move.reverse;
@@ -71,6 +68,9 @@ public class SimpleRobotMapper {
             result.get(1).reverse = move.reverse;
             return result.toArray(new AlgorithmMove[0]);
         }
+        
+        if ("RBLFXZ".indexOf(move.face) != -1)
+            return new AlgorithmMove[] {move};
 
         throw new IllegalArgumentException("Unknown move");
     }
@@ -215,7 +215,7 @@ public class SimpleRobotMapper {
             // Third chunk: reset gripper back into position
             chunks.add(new Request[] {
                     rotateSide(side, forward ? 0 : 1, 0),
-                    new DelayRequest(calculateDelay(false, false, false, true, false)),
+                    new DelayRequest(calculateDelay(false, false, true, false, false)),
             });
             // Fourth chunk: grab face again
             chunks.add(new Request[] {

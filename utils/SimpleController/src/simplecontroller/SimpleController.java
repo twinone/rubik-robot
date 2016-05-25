@@ -234,8 +234,10 @@ public class SimpleController {
      */
     public static void main(String[] args) {
         try {
-            InputStream input = new FileInputStream("/dev/ttyACM1");
-            OutputStream output = new FileOutputStream("/dev/ttyACM1");
+            // Make sure to do `stty -F /dev/ttyUSB0 raw -echo 9600`
+            String dev = "/dev/ttyUSB0";
+            InputStream input = new FileInputStream(dev);
+            OutputStream output = new FileOutputStream(dev);
             
             System.out.println("Sending probe to the robot...");
             Packet.write(output, new ResumeRequest());
