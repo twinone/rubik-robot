@@ -50,7 +50,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     private FaceCapturer mFaceCapturer;
     private Button mButtonCapture;
-    private CubeWebView mCubeWebView;
+    private Button mButtonSolve;
+    private CubeWebView mCube;
 
     private RelativeLayout mRootView;
     private CapturedFace[] mCapturedFaces = new CapturedFace[6];
@@ -58,6 +59,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     private int mCurrentCapturingFaceId = 0;
 
     private static final int REQUEST_ID = 1;
+    private boolean mCubeReady = false;
+    private String mState;
 
     @Nullable
     @Override
@@ -69,6 +72,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mButtonCapture = (Button) mRootView.findViewById(R.id.button_capture);
         mButtonCapture.setOnClickListener(this);
 
+        mButtonSolve = (Button) mRootView.findViewById(R.id.button_solve);
+        mButtonSolve.setOnClickListener(this);
 
         new Handler().post(new Runnable() {
             @Override
@@ -150,12 +155,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             mFaceCapturer.stop();
     }
 
-    private void initCubeWebView(String state) {
-        Log.d(TAG, "State: " + state);
-        if (mCubeWebView != null) return;
-        mCubeWebView = new CubeWebView(this.getActivity(), state);
-        mCubeWebView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        mCubeWebView.setWebViewClient(new WebViewClient() {
+    private void initCubeWebView() {
+        Log.d(TAG, "State: " + mState);
+        if (mCube != null) return;
+        mCube = new CubeWebView(this.getActivity(), mState);
+        mCube.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mCube.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
@@ -163,24 +168,31 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             }
         });
 
-        mRootView.addView(mCubeWebView);
-    }
-
-    private void onAllFacesCaptured(String state) {
-        Log.d("Hi", "done");
+        mRootView.addView(mCube);
     }
 
     private void onCubeWebViewReady() {
-        String moves = (String) mCubeWebView.javaScript("solve", "RRFLUDLRLDUDULBUFBFFFLFDLBUULRRRRLLDUBFUBFRURDDBDDFBBB");
-        Log.d(TAG, "Moves:" + moves);
-
+        mCubeReady = true;
+        mButtonCapture.setVisibility(View.GONE);
+        mButtonSolve.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.button_capture) {
-            mFaceCapturer.capture(mCurrentCapturingFaceId, this);
+        switch (v.getId()) {
+            case R.id.button_capture:
+                if (mFaceCapturer != null) mFaceCapturer.capture(mCurrentCapturingFaceId, this);
+                break;
+
+            case R.id.button_solve:
+                String algorithm = (String) mCube.javaScript("solve", mState);
+                Log.d(TAG, "Algorithm:" + algorithm);
+
+                mCube.cube("algorithm", algorithm);
+                break;
         }
+
+
     }
 
     @Override
@@ -203,11 +215,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 }
             }
 
-            initCubeWebView(StickerSorter.getState(stickers));
+            mState = StickerSorter.getState(stickers);
+            initCubeWebView();
 
             return;
         }
-      
+
     }
 
     private static List<Integer> kNN(int[] colors, int index, int k) {

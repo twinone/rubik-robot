@@ -10,7 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Debug button -->
     <Button
         android:id="@+id/button_capture"
         android:layout_width="100dp"
@@ -19,6 +18,16 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="30dp"
         android:text="Take picture" />
+
+    <Button
+        android:id="@+id/button_solve"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="30dp"
+        android:visibility="gone"
+        android:text="Solve Cube" />
 
     <LinearLayout
         android:id="@+id/colorPreviewWrapper"

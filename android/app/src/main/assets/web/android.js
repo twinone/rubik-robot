@@ -14,13 +14,18 @@ function translateState(state) {
     return res;
 }
 
-var solveInit = false;
+var init = false;
 
-function solve(state) {
-    if (!solveInit) {
-        solveInit = true;
+function initSolver() {
+  if (!init) {
+        init = true;
         Lib.Cube.initSolver();
     }
+}
+
+
+function solve(state) {
+    initSolver();
 
     var c = Lib.Cube.fromString(translateState(state));
 
@@ -30,13 +35,13 @@ function solve(state) {
     console.log("State:", c.asString());
     var res = [];
 
-    console.log(alg);
     alg.split(" ").forEach(function f(x) {
         if (x[1] == '2') {
             res.push(x[0]); res.push(x[0]);
         }
         else res.push(x);
     });
+    console.log(alg);
     console.log(res.length);
     return res.join(" ");
 }
