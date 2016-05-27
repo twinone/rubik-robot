@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include <SoftwareSerial.h>
 
 // MOTOR PARAMS
 
@@ -23,22 +24,27 @@ int servo_pins [8] = {
 
 // CODE
 
+SoftwareSerial bt(2, 3); // RX, TX
 Servo servos [8];
 boolean servos_attached [8];
 
 boolean processingRequests = true;
 
 void setup() {
-  pinMode(13, OUTPUT); //FIXME
-  Serial.begin(9600);// 115200);
+  Serial.begin(9600);
+  bt.begin(9600);
 }
 
 void processRequest() {
-  int length = Serial.read();
+  int length = bt.read();
   if (length == -1) return;
+  
+  Serial.write("Got request of length ");
+  Serial.println(length);
+  
   char data [length];
-  while (Serial.available() < length);
-  if (Serial.readBytes(data, length) < length || length < 1) return;
+  while (bt.available() < length);
+  if (bt.readBytes(data, length) < length || length < 1) return;
   
   char id = data[0];
   if (!processingRequests && id != REQUEST_RESUME) return;
@@ -68,8 +74,8 @@ void processRequest() {
 }
 
 void emitResponse(char *data, int length) {
-  Serial.write(length);
-  Serial.write((unsigned char*)data, length);
+  bt.write(length);
+  bt.write((unsigned char*)data, length);
 }
 
 void emitResponseSimple(char id) {
@@ -115,7 +121,7 @@ void requestBuffer(char *data, int length) {
     return;
   }
   unsigned char peek = ((unsigned char *)data)[0];
-  while (Serial.available() < peek);
+  while (bt.available() < peek);
   emitResponseSimple(RESPONSE_OK);
 }
 
@@ -159,5 +165,10 @@ void requestWrite(char *data, int length) {
 }
 
 void loop() {
-  while (true) processRequest();
+  while (true) {
+    processRequest();
+    Serial.println("Alive");
+    delay(1000);
+  
+  }
 }
