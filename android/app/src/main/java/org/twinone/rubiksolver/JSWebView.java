@@ -1,22 +1,17 @@
 package org.twinone.rubiksolver;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Build;
-import android.os.Handler;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
 import com.google.gson.Gson;
 
-import org.json.JSONObject;
-
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by xavier on 06/04/16.
+ * @author twinone
  */
 public class JSWebView extends WebView {
 
@@ -66,11 +61,6 @@ public class JSWebView extends WebView {
             return o;
         }
     }
-
-    private static final class Result {
-        Object data;
-    }
-
 
     @JavascriptInterface
     public void onResult(int id, String res) {
