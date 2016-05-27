@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver.model.comm;
+package org.twinone.rubiksolver.robot.comm;
 
 /**
  * Exception thrown when the backend returned an error response.

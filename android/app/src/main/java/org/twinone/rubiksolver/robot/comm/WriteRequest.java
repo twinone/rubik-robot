@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver.model.comm;
+package org.twinone.rubiksolver.robot.comm;
 
 /**
  * Request to set a motor to a new position.

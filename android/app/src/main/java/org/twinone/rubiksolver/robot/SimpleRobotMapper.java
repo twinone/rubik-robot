@@ -1,8 +1,10 @@
-package org.twinone.rubiksolver.model;
+package org.twinone.rubiksolver.robot;
 
-import org.twinone.rubiksolver.model.comm.DelayRequest;
-import org.twinone.rubiksolver.model.comm.Request;
-import org.twinone.rubiksolver.model.comm.WriteRequest;
+import org.twinone.rubiksolver.robot.AlgorithmMove;
+import org.twinone.rubiksolver.robot.comm.DelayRequest;
+import org.twinone.rubiksolver.robot.comm.Request;
+import org.twinone.rubiksolver.robot.comm.WriteRequest;
+import org.twinone.rubiksolver.robot.comm.DetachRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,21 +17,21 @@ public class SimpleRobotMapper {
     //FIXME: accessors for this
     
     protected int[] calibrationOffset = {
-        155,  28,
-        157, 150,
-        118, 154,
-        145,  16,
+        138,  46,
+        146, 119,
+         98, 123,
+        150,  24,
     };
 
     // Gripper-specific
-    protected int gripAngle = +20;
+    protected int gripAngle = +30;
     protected int ungripAngle = -40;
 
     // Rotation-specific
-    protected int turnAngle = 142;
-    protected int overshootAngle = 20;
-    protected int recoverAngle = -7;
-    
+    protected int turnAngle = 103;
+    protected int overshootAngle = 5;
+    protected int recoverAngle = -10;
+
 
     public WriteRequest gripSide(int side, boolean grip, int offset) {
         int motor = Request.getMotor(side, Request.MOTOR_GRIP);
@@ -55,9 +57,6 @@ public class SimpleRobotMapper {
      * @return suitable algorithm moves
      */
     public static AlgorithmMove[] preMap(AlgorithmMove move) {
-        if ("RBLFXZ".indexOf(move.face) != -1)
-            return new AlgorithmMove[] {move};
-
         if (move.face == 'Y') {
             List<AlgorithmMove> result = AlgorithmMove.parse("X Z' X'");
             result.get(1).reverse = !move.reverse;
@@ -70,15 +69,18 @@ public class SimpleRobotMapper {
             result.get(1).reverse = move.reverse;
             return result.toArray(new AlgorithmMove[0]);
         }
+        
+        if ("RBLFXZ".indexOf(move.face) != -1)
+            return new AlgorithmMove[] {move};
 
         throw new IllegalArgumentException("Unknown move");
     }
 
-    protected short delayPerGrip = 1000;
-    protected short delayPerUngrip = 1000;
-    protected short delayPerRotation = 1000;
-    protected short delayPerFace = 1000;
-    protected short delayPerRecover = 500;
+    protected short delayPerGrip = 250;
+    protected short delayPerUngrip = 250;
+    protected short delayPerRotation = 500;
+    protected short delayPerFace = 800;
+    protected short delayPerRecover = 200;
 
     public void setDelayPerGrip(short delayPerGrip) {
         this.delayPerGrip = delayPerGrip;
@@ -131,6 +133,14 @@ public class SimpleRobotMapper {
     }
 
     public SimpleRobotMapper() {
+    }
+
+    public DetachRequest detachGripper(int side) {
+        return new DetachRequest(Request.getMotor(side, Request.MOTOR_GRIP));
+    }
+
+    public DetachRequest detachRotation(int side) {
+        return new DetachRequest(Request.getMotor(side, Request.MOTOR_ROTATION));
     }
 
     /**
@@ -209,17 +219,17 @@ public class SimpleRobotMapper {
             // Second chunk: ungrab the side to reset
             chunks.add(new Request[] {
                     gripSide(side, forward ? false : true, 0),
-                    new DelayRequest(calculateDelay(false, true, false, false, false)),
+                    new DelayRequest(calculateDelay(!forward, forward, false, false, false)),
             });
             // Third chunk: reset gripper back into position
             chunks.add(new Request[] {
                     rotateSide(side, forward ? 0 : 1, 0),
-                    new DelayRequest(calculateDelay(false, false, false, true, false)),
+                    new DelayRequest(calculateDelay(false, false, true, false, false)),
             });
             // Fourth chunk: grab face again
             chunks.add(new Request[] {
                     gripSide(side, forward ? true : false, 0),
-                    new DelayRequest(calculateDelay(true, false, false, false, false)),
+                    new DelayRequest(calculateDelay(forward, !forward, false, false, false)),
             });
         }
 
