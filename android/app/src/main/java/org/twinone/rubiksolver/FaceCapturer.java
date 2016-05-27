@@ -52,7 +52,7 @@ public class FaceCapturer {
         mCameraRotation = getCameraRotation(getActivity(), mCameraId, mCamera);
         mCamera.setDisplayOrientation(mCameraRotation);
 
-        FrameLayout fl = (FrameLayout) mFragment.getRootView().findViewById(R.id.frame_layout);
+        FrameLayout fl = (FrameLayout) mFragment.getView().findViewById(R.id.frame_layout);
 
         fl.removeAllViews();
         fl.addView(mCameraPreview);
@@ -124,9 +124,9 @@ public class FaceCapturer {
 
     public void capture(final int id, final Callback c) {
 
-        mCamera.autoFocus(new Camera.AutoFocusCallback() {
-            @Override
-            public void onAutoFocus(boolean success, Camera camera) {
+        //mCamera.autoFocus(new Camera.AutoFocusCallback() {
+          //  @Override
+           // public void onAutoFocus(boolean success, Camera camera) {
                 // Even if it's not focused, we should probably take the picture anyway
                 mCamera.takePicture(null, null, new Camera.PictureCallback() {
                     @Override
@@ -137,8 +137,8 @@ public class FaceCapturer {
                         mCamera.startPreview();
                     }
                 });
-            }
-        });
+            //}
+        //});
     }
 
     public Bitmap getTransformedBitmap(byte[] data) {

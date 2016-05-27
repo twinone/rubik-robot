@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -22,6 +23,7 @@ import android.widget.TextView;
 
 import org.twinone.rubiksolver.model.AlgorithmMove;
 import org.twinone.rubiksolver.model.SimpleRobotMapper;
+import org.twinone.rubiksolver.model.Sticker;
 import org.twinone.rubiksolver.model.comm.DelayRequest;
 import org.twinone.rubiksolver.model.comm.Request;
 import org.twinone.rubiksolver.util.ColorUtil;
@@ -61,7 +63,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        checkPermissions();
         mRootView = (RelativeLayout) inflater.inflate(R.layout.fragment_camera, null);
 
         setupSquares();
@@ -69,8 +70,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mButtonCapture.setOnClickListener(this);
 
 
-        // TODO request runtime permissions
-        //mFaceCapturer = new FaceCapturer(this);
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                checkPermissions();
+            }
+        });
 
         return mRootView;
     }
@@ -91,7 +96,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         }
 
         mFaceCapturer = new FaceCapturer(this);
-
+        mFaceCapturer.start();
         return true;
     }
 
@@ -186,33 +191,23 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         }
 
         if (mCurrentCapturingFaceId == 6) {
-            int colors[] = new int[face.size * face.size * 6];
+            List<Sticker> stickers = new ArrayList<>();
 
             int p = 0;
-            for (int i = 0; i < mCapturedFaces.length; i++) {
+            for (int i = 0; i < 6; i++) {
                 CapturedFace f = mCapturedFaces[i];
                 for (int j = 0; j < f.size; j++) {
                     for (int k = 0; k < f.size; k++) {
-                        colors[p++] = f.getColor(j, k);
+                        stickers.add(new Sticker(p++, f.getColor(j, k)));
                     }
                 }
             }
-            char[] state = new char[6 * 9];
-            for (int l = 0; l < 6; l++) {
-                List<Integer> a = kNN(colors, l * 9 + 4, 6);
-                a.add(l * 9 + 4);
-                for (int piece : a)
-                    state[piece] = "ULFRBD".charAt(l);
-            }
-            boolean invalidState = false;
-            for (char piece : state) if (piece == 0) invalidState = true;
-            if (invalidState) {
-                Log.e(TAG, "Invalid state, scanning didn't work out well.");
-                return;
-            }
 
-            initCubeWebView(new String(state));
+            initCubeWebView(StickerSorter.getState(stickers));
+
+            return;
         }
+      
     }
 
     private static List<Integer> kNN(int[] colors, int index, int k) {
@@ -224,7 +219,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         for (int j = 0; j < colors.length; j++) {
             if (index == j) continue;
             Pair p = new Pair();
-            p.dst = colorDistance(colors[j], colors[index]);
+            p.dst = ColorUtil.colorDistance(colors[j], colors[index]);
             p.index = j;
             dsts.add(p);
         }
@@ -302,15 +297,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         for (int i = 0; i < d.length; i++) d[i] = Math.pow(d[i] / 255.0, COLOR_ERROR_GAMMA);
     }
 
-    /**
-     * Returns the distance between two colors
-     */
-    public static double colorDistance(int a, int b) {
-        // see http://stackoverflow.com/a/26998429
-        double[] lab1 = ColorUtil.ColorToLAB(a);
-        double[] lab2 = ColorUtil.ColorToLAB(b);
-        return Math.sqrt(Math.pow(lab2[0] - lab1[0], 2) + Math.pow(lab2[1] - lab1[1], 2) + Math.pow(lab2[2] - lab1[2], 2));
-    }
 
     public void handleAlgorithm(String alg) {
         List<AlgorithmMove> moves = AlgorithmMove.parse(alg);

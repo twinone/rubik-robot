@@ -16,6 +16,16 @@ import android.graphics.Color;
 public class ColorUtil {
 
     /**
+     * Returns the distance between two colors
+     */
+    public static double colorDistance(int a, int b) {
+        // see http://stackoverflow.com/a/26998429
+        double[] lab1 = ColorUtil.ColorToLAB(a);
+        double[] lab2 = ColorUtil.ColorToLAB(b);
+        return Math.sqrt(Math.pow(lab2[0] - lab1[0], 2) + Math.pow(lab2[1] - lab1[1], 2) + Math.pow(lab2[2] - lab1[2], 2));
+    }
+
+    /**
      * reference white in XYZ coordinates
      */
     public static double[] D50 = {96.4212, 100.0, 82.5188};
