@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver.model.comm;
+package org.twinone.rubiksolver.robot.comm;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

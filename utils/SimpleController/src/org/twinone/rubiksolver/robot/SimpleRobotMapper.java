@@ -1,9 +1,10 @@
-package org.twinone.rubiksolver.model;
+package org.twinone.rubiksolver.robot;
 
-import org.twinone.rubiksolver.model.comm.DelayRequest;
-import org.twinone.rubiksolver.model.comm.Request;
-import org.twinone.rubiksolver.model.comm.WriteRequest;
-import org.twinone.rubiksolver.model.comm.DetachRequest;
+import org.twinone.rubiksolver.robot.AlgorithmMove;
+import org.twinone.rubiksolver.robot.comm.DelayRequest;
+import org.twinone.rubiksolver.robot.comm.Request;
+import org.twinone.rubiksolver.robot.comm.WriteRequest;
+import org.twinone.rubiksolver.robot.comm.DetachRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

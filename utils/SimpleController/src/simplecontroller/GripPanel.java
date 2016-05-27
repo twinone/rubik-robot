@@ -13,7 +13,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.twinone.rubiksolver.model.comm.Request;
+import org.twinone.rubiksolver.robot.comm.Request;
 
 /**
  *

@@ -1,5 +1,6 @@
 package simplecontroller;
 
+import org.twinone.rubiksolver.robot.RobotScheduler;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -27,16 +28,16 @@ import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.twinone.rubiksolver.model.AlgorithmMove;
-import org.twinone.rubiksolver.model.SimpleRobotMapper;
-import org.twinone.rubiksolver.model.comm.DelayRequest;
-import org.twinone.rubiksolver.model.comm.DetachRequest;
-import org.twinone.rubiksolver.model.comm.FailedResponseException;
-import org.twinone.rubiksolver.model.comm.Packet;
-import org.twinone.rubiksolver.model.comm.Request;
-import org.twinone.rubiksolver.model.comm.Response;
-import org.twinone.rubiksolver.model.comm.ResumeRequest;
-import org.twinone.rubiksolver.model.comm.WriteRequest;
+import org.twinone.rubiksolver.robot.AlgorithmMove;
+import org.twinone.rubiksolver.robot.SimpleRobotMapper;
+import org.twinone.rubiksolver.robot.comm.DelayRequest;
+import org.twinone.rubiksolver.robot.comm.DetachRequest;
+import org.twinone.rubiksolver.robot.comm.FailedResponseException;
+import org.twinone.rubiksolver.robot.comm.Packet;
+import org.twinone.rubiksolver.robot.comm.Request;
+import org.twinone.rubiksolver.robot.comm.Response;
+import org.twinone.rubiksolver.robot.comm.ResumeRequest;
+import org.twinone.rubiksolver.robot.comm.WriteRequest;
 
 /**
  *

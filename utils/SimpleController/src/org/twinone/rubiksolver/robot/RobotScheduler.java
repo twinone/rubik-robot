@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package simplecontroller;
+package org.twinone.rubiksolver.robot;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,11 +16,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.twinone.rubiksolver.model.comm.FailedResponseException;
-import org.twinone.rubiksolver.model.comm.Packet;
-import org.twinone.rubiksolver.model.comm.Request;
-import org.twinone.rubiksolver.model.comm.Response;
-import org.twinone.rubiksolver.model.comm.ResumeRequest;
+import org.twinone.rubiksolver.robot.comm.FailedResponseException;
+import org.twinone.rubiksolver.robot.comm.Packet;
+import org.twinone.rubiksolver.robot.comm.Request;
+import org.twinone.rubiksolver.robot.comm.Response;
+import org.twinone.rubiksolver.robot.comm.ResumeRequest;
 
 /**
  * Sends chunks of requests to the backend, checking the status of each request
@@ -80,6 +80,11 @@ public class RobotScheduler implements AutoCloseable {
     public void put(Iterable<Request> requests, ChunkListener listener) throws InterruptedException {
         if (requests == null) throw new IllegalArgumentException();
         queue.put(new ChunkEntry(requests, listener));
+    }
+    
+    public boolean offer(Iterable<Request> requests, ChunkListener listener) {
+        if (requests == null) throw new IllegalArgumentException();
+        return queue.offer(new ChunkEntry(requests, listener));
     }
     
     public void put(Request request) throws InterruptedException {

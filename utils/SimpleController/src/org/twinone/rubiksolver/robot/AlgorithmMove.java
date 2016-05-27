@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver.model;
+package org.twinone.rubiksolver.robot;
 
 import java.util.ArrayList;
 import java.util.Collections;
