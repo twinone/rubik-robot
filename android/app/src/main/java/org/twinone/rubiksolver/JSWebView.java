@@ -63,7 +63,7 @@ public class JSWebView extends WebView {
             String res = mPendingCalls.get(id);
             Object o = new Gson().fromJson(res, Object.class);
             mPendingCalls.remove(id);
-            return res;
+            return o;
         }
     }
 
