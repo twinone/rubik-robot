@@ -188,7 +188,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 String algorithm = (String) mCube.javaScript("solve", mState);
                 Log.d(TAG, "Algorithm:" + algorithm);
 
-                mCube.cube("algorithm", algorithm);
+                //mCube.cube("algorithm", algorithm);
+
+                List<Request> reqs = handleAlgorithm(algorithm);
+                // TODO add robot scheduler here
+                //((MainActivity)getActivity()).getRobotScheduler() //.writeRequests(reqs);
+
                 break;
         }
 
@@ -311,7 +316,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     }
 
 
-    public void handleAlgorithm(String alg) {
+    public List<Request> handleAlgorithm(String alg) {
         List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
         Log.d(TAG, "Solve (" + moves.size() + "): " + alg);
 
@@ -331,6 +336,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         }
         time /= 1000;
         Log.d(TAG, "Translated into " + requests.size() + " backend requests.\nTheoretical execution time is " + (time / 60) + ":" + (time % 60) + " across " + delays + " delays.");
+        return requests;
     }
 
 }
