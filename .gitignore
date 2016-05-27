@@ -1,1 +1,4 @@
 .DS_Store
+/utils/SimpleController/nbproject/private/
+/utils/SimpleController/build/
+/utils/SimpleController/dist/
