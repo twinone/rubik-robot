@@ -27,8 +27,7 @@ public class SimpleRobotMapper {
     protected int ungripAngle = -40;
 
     // Rotation-specific
-    protected int turnAngleFB = 103;
-    protected int turnAngleRL = 103;
+    protected int turnAngle = 103;
     protected int overshootAngle = 5;
     protected int recoverAngle = -10;
 
@@ -44,7 +43,7 @@ public class SimpleRobotMapper {
         int position = calibrationOffset[motor];
         boolean reverse = (side == 1) || (side == 2);
         offset *= (pos != 0) ? +1 : -1;
-        if (pos != 0) offset += (side % 2 == 0) ? turnAngleRL : turnAngleFB;
+        if (pos != 0) offset += turnAngle;
         return moveMotor(motor, position + offset * (reverse ? -1 : +1));
     }
     
@@ -67,13 +66,6 @@ public class SimpleRobotMapper {
             List<AlgorithmMove> result = AlgorithmMove.parse("X' F X");
             if (move.face == 'D') result.get(1).face = 'B';
             result.get(1).reverse = move.reverse;
-            return result.toArray(new AlgorithmMove[0]);
-        }
-        
-//        //FIXME: hack
-        if (move.face == 'R') {
-            List<AlgorithmMove> result = AlgorithmMove.parse("Z X F X' Z'");
-            result.get(2).reverse = move.reverse;
             return result.toArray(new AlgorithmMove[0]);
         }
         
@@ -140,6 +132,14 @@ public class SimpleRobotMapper {
     }
 
     public SimpleRobotMapper() {
+    }
+
+    public DetachRequest detachGripper(int side) {
+        return new DetachRequest(Request.getMotor(side, Request.MOTOR_GRIP));
+    }
+
+    public DetachRequest detachRotation(int side) {
+        return new DetachRequest(Request.getMotor(side, Request.MOTOR_ROTATION));
     }
 
     /**
@@ -218,7 +218,7 @@ public class SimpleRobotMapper {
             // Second chunk: ungrab the side to reset
             chunks.add(new Request[] {
                     gripSide(side, forward ? false : true, 0),
-                    new DelayRequest(calculateDelay(false, true, false, false, false)),
+                    new DelayRequest(calculateDelay(!forward, forward, false, false, false)),
             });
             // Third chunk: reset gripper back into position
             chunks.add(new Request[] {
@@ -228,7 +228,7 @@ public class SimpleRobotMapper {
             // Fourth chunk: grab face again
             chunks.add(new Request[] {
                     gripSide(side, forward ? true : false, 0),
-                    new DelayRequest(calculateDelay(true, false, false, false, false)),
+                    new DelayRequest(calculateDelay(forward, !forward, false, false, false)),
             });
         }
 

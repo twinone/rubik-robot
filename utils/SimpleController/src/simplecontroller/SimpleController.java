@@ -29,7 +29,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.twinone.rubiksolver.model.AlgorithmMove;
 import org.twinone.rubiksolver.model.SimpleRobotMapper;
-import org.twinone.rubiksolver.model.SlightlyMoreAdvancedMapper;
 import org.twinone.rubiksolver.model.comm.DelayRequest;
 import org.twinone.rubiksolver.model.comm.DetachRequest;
 import org.twinone.rubiksolver.model.comm.FailedResponseException;
@@ -47,7 +46,6 @@ public class SimpleController {
 
     RobotScheduler scheduler;
     SimpleRobotMapper mapper = new SimpleRobotMapper();
-    SlightlyMoreAdvancedMapper mapper2 = new SlightlyMoreAdvancedMapper();
     
     JFrame frame;
     
@@ -259,17 +257,17 @@ public class SimpleController {
             OutputStream output = new FileOutputStream(dev);
             
             System.out.println("Sending probe to the robot...");
-            //hPacket.write(output, new ResumeRequest());
-            //output.flush();
-            //Packet.checkResponse(input);
+            Packet.write(output, new ResumeRequest());
+            output.flush();
+            Packet.checkResponse(input);
             System.out.println("Robot is alive and speaking to us.");
             
             RobotScheduler scheduler = new RobotScheduler(input, output, 1);
             SimpleController c = new SimpleController(scheduler);
         } catch (IOException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
-        //} catch (FailedResponseException ex) {
-        //    Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (FailedResponseException ex) {
+            Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

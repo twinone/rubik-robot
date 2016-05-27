@@ -119,7 +119,7 @@ public class RobotScheduler implements AutoCloseable {
             // Dequeue request
             Request toCheck = buffer.remove();
             Response response = Packet.readResponse(input);
-            if (!response.isOk()) {
+            if (response == null || !response.isOk()) {
                 if (chunk.listener != null) chunk.listener.chunkFailed(idx, toCheck, response);
                 Packet.write(output, new ResumeRequest());
                 Packet.checkResponse(input);
