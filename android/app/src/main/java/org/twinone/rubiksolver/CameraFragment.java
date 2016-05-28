@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -21,11 +22,11 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.twinone.rubiksolver.model.AlgorithmMove;
-import org.twinone.rubiksolver.model.SimpleRobotMapper;
 import org.twinone.rubiksolver.model.Sticker;
-import org.twinone.rubiksolver.model.comm.DelayRequest;
-import org.twinone.rubiksolver.model.comm.Request;
+import org.twinone.rubiksolver.robot.AlgorithmMove;
+import org.twinone.rubiksolver.robot.SimpleRobotMapper;
+import org.twinone.rubiksolver.robot.comm.DelayRequest;
+import org.twinone.rubiksolver.robot.comm.Request;
 import org.twinone.rubiksolver.util.ColorUtil;
 
 import java.util.ArrayList;
@@ -38,6 +39,10 @@ import java.util.List;
  */
 @SuppressWarnings("deprecation")
 public class CameraFragment extends Fragment implements View.OnClickListener, FaceCapturer.Callback {
+
+    private static final boolean DBG = true;
+    private static final String SOLVED = "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD";
+    private static final String DBG_STATE = SOLVED;
 
     private static final String TAG = "CameraFragment";
     // The absolute difference between two colors such that we consider them to be different colors.
@@ -100,6 +105,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             return false;
         }
 
+        if (DBG) {
+            mState = DBG_STATE;
+            initCubeWebView();
+            return true;
+        }
         mFaceCapturer = new FaceCapturer(this);
         mFaceCapturer.start();
         return true;
@@ -158,7 +168,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     private void initCubeWebView() {
         Log.d(TAG, "State: " + mState);
         if (mCube != null) return;
+
         mCube = new CubeWebView(this.getActivity(), mState);
+        mCube.addJavascriptInterface(this, "MoveCallback");
         mCube.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         mCube.setWebViewClient(new WebViewClient() {
             @Override
@@ -169,6 +181,22 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         });
 
         mRootView.addView(mCube);
+    }
+
+    /**
+     * Called when a move is about to be executed on the cube
+     *
+     * @param move
+     */
+    @JavascriptInterface
+    public void onMoveStart(final String move) {
+        Log.d(TAG, "Move started: " + move);
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                exec(move);
+            }
+        });
     }
 
     private void onCubeWebViewReady() {
@@ -190,14 +218,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
                 //mCube.cube("algorithm", algorithm);
 
-                List<Request> reqs = handleAlgorithm(algorithm);
-                // TODO add robot scheduler here
-                //((MainActivity)getActivity()).getRobotScheduler() //.writeRequests(reqs);
+                exec(algorithm);
 
                 break;
         }
-
-
     }
 
     @Override
@@ -316,7 +340,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     }
 
 
-    public List<Request> handleAlgorithm(String alg) {
+    public List<Request> map(String alg) {
         List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
         Log.d(TAG, "Solve (" + moves.size() + "): " + alg);
 
@@ -337,6 +361,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         time /= 1000;
         Log.d(TAG, "Translated into " + requests.size() + " backend requests.\nTheoretical execution time is " + (time / 60) + ":" + (time % 60) + " across " + delays + " delays.");
         return requests;
+    }
+
+    private void exec(String algorithm) {
+        ((MainActivity) getActivity()).getRobotScheduler().offer(map(algorithm), null);
     }
 
 }

@@ -1,23 +1,16 @@
 package org.twinone.rubiksolver;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelUuid;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
+
+import org.twinone.rubiksolver.robot.RobotScheduler;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -27,7 +20,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static final int SIZE = 3;
     private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothSocket mSocket;
+    private RobotScheduler mRobotScheduler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,19 +57,17 @@ public class MainActivity extends AppCompatActivity {
             BluetoothSocket socket = device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
             socket.connect();
 
-            mSocket = socket;
+            mRobotScheduler = new RobotScheduler(socket.getInputStream(), socket.getOutputStream(), 10);
+            Toast.makeText(this, "Connected to arduino", Toast.LENGTH_SHORT).show();
 
-            // TODO add RobotScheduler here
-            //mRobotScheduler = ...
         } catch (IOException e) {
             Log.d("Main", "Exception connecting to bluetooth: ", e);
         }
     }
 
-    // TODO
-//    public RobotScheduler getRobotScheduler() {
-//        return mRobotScheduler;
-//    }
+    public RobotScheduler getRobotScheduler() {
+        return mRobotScheduler;
+    }
 
 
 }

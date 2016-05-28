@@ -45,3 +45,10 @@ function solve(state) {
     console.log(res.length);
     return res.join(" ");
 }
+
+
+// Notify about moves on the cube to Android
+cube.moveStartListener = function(move) {
+    console.log("notifying android about move start: " + move);
+    MoveCallback.onMoveStart(move);
+}
