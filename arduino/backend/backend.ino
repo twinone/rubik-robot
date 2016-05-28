@@ -165,10 +165,5 @@ void requestWrite(char *data, int length) {
 }
 
 void loop() {
-  while (true) {
-    processRequest();
-    Serial.println("Alive");
-    delay(1000);
-  
-  }
+  while (true) processRequest();
 }
