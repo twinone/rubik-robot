@@ -38,13 +38,22 @@ void setup() {
 void processRequest() {
   int length = bt.read();
   if (length == -1) return;
-  
-  Serial.write("Got request of length ");
-  Serial.println(length);
-  
+    
   char data [length];
   while (bt.available() < length);
   if (bt.readBytes(data, length) < length || length < 1) return;
+
+  // BEGIN DEBUG
+  Serial.print("REQ (");
+  Serial.print(length);
+  Serial.print("): ");
+
+  for (int i = 0; i < length; i++) {
+    Serial.print(" ");
+    Serial.print(data[i], HEX);
+  }
+  Serial.println();
+  // END DEBUG
   
   char id = data[0];
   if (!processingRequests && id != REQUEST_RESUME) return;
@@ -71,6 +80,7 @@ void processRequest() {
       emitResponseSimple(RESPONSE_INVALID_COMMAND);
       processingRequests = false;
   }
+  Serial.println("Done processing request");
 }
 
 void emitResponse(char *data, int length) {
