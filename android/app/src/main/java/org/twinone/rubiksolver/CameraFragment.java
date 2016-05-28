@@ -190,13 +190,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
      */
     @JavascriptInterface
     public void onMoveStart(final String move) {
-        Log.d(TAG, "Move started: " + move);
-        new Handler().post(new Runnable() {
-            @Override
-            public void run() {
-                exec(move);
-            }
-        });
+        exec(move);
     }
 
     private void onCubeWebViewReady() {
