@@ -30,6 +30,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.twinone.rubiksolver.robot.AlgorithmMove;
 import org.twinone.rubiksolver.robot.SimpleRobotMapper;
+import org.twinone.rubiksolver.robot.SlightlyMoreAdvancedMapper;
 import org.twinone.rubiksolver.robot.comm.DelayRequest;
 import org.twinone.rubiksolver.robot.comm.DetachRequest;
 import org.twinone.rubiksolver.robot.comm.Request;
@@ -44,6 +45,7 @@ public class SimpleController {
 
     RobotScheduler scheduler;
     SimpleRobotMapper mapper = new SimpleRobotMapper();
+    SlightlyMoreAdvancedMapper advancedMapper;
     
     JFrame frame;
     
@@ -116,6 +118,8 @@ public class SimpleController {
     
     public SimpleController(RobotScheduler scheduler) {
         this.scheduler = scheduler;
+        this.advancedMapper = new SlightlyMoreAdvancedMapper();
+        this.advancedMapper.mapper = mapper;
         
         detachButton = new JButton("Detach all");
         detachButton.addActionListener(new ActionListener() {
@@ -194,6 +198,7 @@ public class SimpleController {
             List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
 
             //final List<Request> requests = mapper.map(moves);
+            final List<Request> requests = advancedMapper.map(moves);
             if (requests.isEmpty()) return;
             
             List<AlgorithmMove> preMappedMoves = new ArrayList<>();
