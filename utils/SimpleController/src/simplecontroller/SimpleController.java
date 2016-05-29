@@ -57,8 +57,8 @@ public class SimpleController {
     RotationPanel[] rotationPanels = new RotationPanel[4];
     
     // Axis control
-    GripPanel[] axisGripPanels = new GripPanel[4];
-    RotationPanel[] axisRotationPanels = new RotationPanel[4];
+    GripPanel[] axisGripPanels = new GripPanel[2];
+    RotationPanel[] axisRotationPanels = new RotationPanel[2];
     
     // Robot communication
     boolean sendingUpdates = true;
@@ -191,21 +191,22 @@ public class SimpleController {
             String alg = algorithmField.getText();
             List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
 
+            //final List<Request> requests = mapper.map(moves);
+            if (requests.isEmpty()) return;
+            
             List<AlgorithmMove> preMappedMoves = new ArrayList<>();
             for (AlgorithmMove move : moves)
                 Collections.addAll(preMappedMoves, SimpleRobotMapper.preMap(move));
             System.out.println("Performing algorithm: " + AlgorithmMove.format(moves));
             System.out.println("Pre-mapped algorithm: " + AlgorithmMove.format(preMappedMoves));
-
-            final List<Request> requests = mapper.map(moves);
             
             int totalTime = 0;
             for (Request r : requests)
                 if (r instanceof DelayRequest) totalTime += ((DelayRequest)r).getDelay();
-            System.out.printf("Theorical time:\n - total: %dms\n - per move: %dms\n - per pre-mapped move: %dms\n", totalTime, totalTime/moves.size(), totalTime/preMappedMoves.size());
-            totalTime = (int) Math.round(totalTime / 1000.0);
-            System.out.printf("Theorical time: %d:%02d\n", (int)Math.floor(totalTime/60), (int)totalTime % 60);
+            int totalSeconds = (int)Math.round(totalTime / 1000.0);
+            System.out.printf("Theorical time:\n - total: %dms (%02d:%02d)\n - per move: %dms\n - per pre-mapped move: %dms\n", totalTime, (int)Math.floor(totalTime/60), (int)totalTime % 60, totalTime/moves.size(), totalTime/preMappedMoves.size());
             
+            algorithmProgressBar.setValue(0);
             algorithmProgressBar.setMaximum(requests.size());
             RobotScheduler.ChunkListener listener = new RobotScheduler.ChunkListener() {
                 @Override
@@ -216,13 +217,11 @@ public class SimpleController {
 
                 @Override
                 public void chunkFailed(int i, Request req, Response res) {
-                    algorithmProgressBar.setValue(i+1);
                     System.err.println("Chunk failed at: " + i + " (" + req.getId() + ") " + req + " with " + res.getId());
                 }
 
                 @Override
                 public void chunkComplete() {
-                    algorithmProgressBar.setValue(0);
                     System.out.println("Chunk completed.");
                 }
             };
