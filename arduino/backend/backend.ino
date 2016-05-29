@@ -1,5 +1,4 @@
 #include <Servo.h>
-#include <SoftwareSerial.h>
 
 // MOTOR PARAMS
 
@@ -24,36 +23,22 @@ int servo_pins [8] = {
 
 // CODE
 
-SoftwareSerial bt(2, 3); // RX, TX
 Servo servos [8];
 boolean servos_attached [8];
 
 boolean processingRequests = true;
 
 void setup() {
-  Serial.begin(9600);
-  bt.begin(9600);
+  pinMode(13, OUTPUT); //FIXME
+  Serial.begin(9600);// 115200);
 }
 
 void processRequest() {
-  int length = bt.read();
+  int length = Serial.read();
   if (length == -1) return;
-    
   char data [length];
-  while (bt.available() < length);
-  if (bt.readBytes(data, length) < length || length < 1) return;
-
-  // BEGIN DEBUG
-  Serial.print("REQ (");
-  Serial.print(length);
-  Serial.print("): ");
-
-  for (int i = 0; i < length; i++) {
-    Serial.print(" ");
-    Serial.print(data[i], HEX);
-  }
-  Serial.println();
-  // END DEBUG
+  while (Serial.available() < length);
+  if (Serial.readBytes(data, length) < length || length < 1) return;
   
   char id = data[0];
   if (!processingRequests && id != REQUEST_RESUME) return;
@@ -80,12 +65,11 @@ void processRequest() {
       emitResponseSimple(RESPONSE_INVALID_COMMAND);
       processingRequests = false;
   }
-  Serial.println("Done processing request");
 }
 
 void emitResponse(char *data, int length) {
-  bt.write(length);
-  bt.write((unsigned char*)data, length);
+  Serial.write(length);
+  Serial.write((unsigned char*)data, length);
 }
 
 void emitResponseSimple(char id) {
@@ -131,7 +115,7 @@ void requestBuffer(char *data, int length) {
     return;
   }
   unsigned char peek = ((unsigned char *)data)[0];
-  while (bt.available() < peek);
+  while (Serial.available() < peek);
   emitResponseSimple(RESPONSE_OK);
 }
 
