@@ -31,6 +31,8 @@ public class RotationPanel extends JPanel {
     JButton detach;
     JTextField field;
     JSlider slider;
+    JButton vertical;
+    JButton horizontal;
     
     public RotationPanel(SimpleController cnt, int[] sides) {
         this.sides = sides;
@@ -45,8 +47,8 @@ public class RotationPanel extends JPanel {
         
         slider = new JSlider(0, 180, 0);
         
-        JButton vertical = new JButton("V");
-        JButton horizontal = new JButton("H");
+        vertical = new JButton("V");
+        horizontal = new JButton("H");
         JPanel shortcutsPanel = new JPanel(new GridLayout(1, 2, 5, 5));
         shortcutsPanel.add(vertical);
         shortcutsPanel.add(horizontal);
@@ -96,11 +98,13 @@ public class RotationPanel extends JPanel {
     }
     
     protected void sendMove(int position) {
+        if (!isEnabled()) return;
         for (int s : sides)
             cnt.setMotorHighLevel(Request.getMotor(s, Request.MOTOR_ROTATION), position);
     }
     
     protected void setPosition(int pos) {
+        if (!isEnabled()) return;
         for (int s : sides)
             cnt.setMotor(Request.getMotor(s, Request.MOTOR_ROTATION), pos);
     }
@@ -114,6 +118,7 @@ public class RotationPanel extends JPanel {
     }
     
     protected void detach() {
+        if (!isEnabled()) return;
         for (int s : sides)
             cnt.detachMotor(Request.getMotor(s, Request.MOTOR_ROTATION));
     }
@@ -125,4 +130,16 @@ public class RotationPanel extends JPanel {
         field.setText(String.valueOf(pos));
         slider.setValue(pos);
     }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(false);
+        detach.setEnabled(enabled);
+        slider.setEnabled(enabled);
+        field.setEditable(enabled);
+        vertical.setEnabled(enabled);
+        horizontal.setEnabled(enabled);
+        super.setEnabled(enabled);
+    }
+    
 }

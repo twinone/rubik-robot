@@ -81,11 +81,13 @@ public class GripPanel extends JPanel {
     }
     
     protected void sendMove() {
+        if (!isEnabled()) return;
         for (int s : sides)
             cnt.setMotorHighLevel(Request.getMotor(s, Request.MOTOR_GRIP), toggle.isSelected() ? 1 : 0);
     }
     
     protected void setPosition(int pos) {
+        if (!isEnabled()) return;
         for (int s : sides)
             cnt.setMotor(Request.getMotor(s, Request.MOTOR_GRIP), pos);
     }
@@ -99,6 +101,7 @@ public class GripPanel extends JPanel {
     }
     
     protected void detach() {
+        if (!isEnabled()) return;
         for (int s : sides)
             cnt.detachMotor(Request.getMotor(s, Request.MOTOR_GRIP));
     }
@@ -110,6 +113,16 @@ public class GripPanel extends JPanel {
         field.setText(String.valueOf(pos));
         slider.setValue(pos);
         //if (sides.length == 1) toggle.setSelected(pos == 180);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(false);
+        detach.setEnabled(enabled);
+        field.setEditable(enabled);
+        slider.setEnabled(enabled);
+        toggle.setEnabled(enabled);
+        super.setEnabled(enabled);
     }
     
 }

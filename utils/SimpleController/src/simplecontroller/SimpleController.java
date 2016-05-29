@@ -218,21 +218,36 @@ public class SimpleController {
                 @Override
                 public void chunkFailed(int i, Request req, Response res) {
                     System.err.println("Chunk failed at: " + i + " (" + req.getId() + ") " + req + " with " + res.getId());
+                    setGuiEnabled(true);
                 }
 
                 @Override
                 public void chunkComplete() {
                     System.out.println("Chunk completed.");
+                    algorithmField.setText("");
+                    setGuiEnabled(true);
                 }
             };
             scheduler.put(requests, listener);
             System.out.println("Sending "+requests.size()+" requests.");
-            algorithmField.setText("");
-
-            // FIXME: disable UI while algorithm running
+            setGuiEnabled(false);
         } catch (InterruptedException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public void setGuiEnabled(boolean enabled) {
+        algorithmField.setEditable(enabled);
+        detachButton.setEnabled(enabled);
+        sendUpdatesButton.setEnabled(enabled);
+        for (GripPanel p : gripPanels)
+            p.setEnabled(enabled);
+        for (RotationPanel p : rotationPanels)
+            p.setEnabled(enabled);
+        for (GripPanel p : axisGripPanels)
+            p.setEnabled(enabled);
+        for (RotationPanel p : axisRotationPanels)
+            p.setEnabled(enabled);
     }
 
     /**
