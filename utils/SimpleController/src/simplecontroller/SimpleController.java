@@ -139,6 +139,8 @@ public class SimpleController {
         });
         algorithmField.setColumns(15);
         algorithmProgressBar = new JProgressBar();
+        algorithmProgressBar.setStringPainted(true);
+        algorithmProgressBar.setString("");
         JPanel globalControls = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
         globalControls.add(detachButton);
         globalControls.add(sendUpdatesButton);
@@ -208,9 +210,15 @@ public class SimpleController {
             
             algorithmProgressBar.setValue(0);
             algorithmProgressBar.setMaximum(requests.size());
+            final int finalTotalTime = totalTime;
             RobotScheduler.ChunkListener listener = new RobotScheduler.ChunkListener() {
+                int elapsedTime;
                 @Override
                 public void requestComplete(int i, Request req) {
+                    if (req instanceof DelayRequest)
+                        elapsedTime += ((DelayRequest)req).getDelay();
+                    int remainingTime = (int)Math.round((finalTotalTime - elapsedTime) / 1000.0);
+                    algorithmProgressBar.setString(String.format("%d/%d (%02d:%02d)", (i+1), requests.size(), (int)Math.floor(remainingTime/60), (int)remainingTime % 60));
                     algorithmProgressBar.setValue(i+1);
                     System.out.printf("%4d/%d: %s\n", i+1, requests.size(), req);
                 }
