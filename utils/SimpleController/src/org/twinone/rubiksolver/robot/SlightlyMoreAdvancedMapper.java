@@ -2,7 +2,6 @@ package org.twinone.rubiksolver.robot;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -15,7 +14,7 @@ import org.twinone.rubiksolver.robot.comm.Request;
 
 /**
  * This mapper tries to minimize cube rotations, and parallelizes
- * face rotations.
+ * face rotations. This is dirty code, somehow temporary.
  */
 public class SlightlyMoreAdvancedMapper {
     
@@ -60,29 +59,6 @@ public class SlightlyMoreAdvancedMapper {
             return v;
         }
     }
-    
-//    public void consumeMove(AlgorithmMove move) {
-//        // Axis rotation: just change reference
-//        int axis = "XYZ".indexOf(move.face);
-//        if (axis != -1) {
-//            int[] rotation = new int[3];
-//            rotation[axis] = move.reverse ? -1 : +1;
-//            orientation = orientation.rotate(rotation);
-//            return;
-//        }
-//        
-//        // Rotating already available axis
-//        int[] v = orientation.getFace(move.face);
-//        if (v[2] == 0) {
-//            boolean thisAxis = v[1] != 0;
-//            if (manipulatedAxis != thisAxis) flushManipulatedAxis();
-//            manipulatedAxis = thisAxis;
-//            
-//        }
-//        
-//        // Rotating non-available axis
-//        // (we need to keep the manipulatedAxis
-//    }
     
     public static class Chunk {
         int axis; // real axis managed by this chunk
