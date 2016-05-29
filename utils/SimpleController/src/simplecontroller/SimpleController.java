@@ -32,11 +32,8 @@ import org.twinone.rubiksolver.robot.AlgorithmMove;
 import org.twinone.rubiksolver.robot.SimpleRobotMapper;
 import org.twinone.rubiksolver.robot.comm.DelayRequest;
 import org.twinone.rubiksolver.robot.comm.DetachRequest;
-import org.twinone.rubiksolver.robot.comm.FailedResponseException;
-import org.twinone.rubiksolver.robot.comm.Packet;
 import org.twinone.rubiksolver.robot.comm.Request;
 import org.twinone.rubiksolver.robot.comm.Response;
-import org.twinone.rubiksolver.robot.comm.ResumeRequest;
 import org.twinone.rubiksolver.robot.comm.WriteRequest;
 
 /**
@@ -53,7 +50,6 @@ public class SimpleController {
     // Global controls
     JButton detachButton;
     JToggleButton sendUpdatesButton;
-    JButton resendButton;
     JTextField algorithmField;
     
     // Servo control
@@ -134,12 +130,6 @@ public class SimpleController {
                 sendingUpdates = sendUpdatesButton.isSelected();
             }
         });
-        resendButton = new JButton("Send");
-        resendButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                resendAll();
-            }
-        });
         JLabel algorithmFieldLabel = new JLabel("Algorithm:");
         algorithmField = new JTextField();
         algorithmField.addActionListener(new ActionListener() {
@@ -152,7 +142,6 @@ public class SimpleController {
         JPanel globalControls = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
         globalControls.add(detachButton);
         globalControls.add(sendUpdatesButton);
-        globalControls.add(resendButton);
         globalControls.add(algorithmFieldLabel);
         globalControls.add(algorithmField);
         globalControls.add(algorithmProgressBar);
