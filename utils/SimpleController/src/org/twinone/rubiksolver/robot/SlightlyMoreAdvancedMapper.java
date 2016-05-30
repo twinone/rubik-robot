@@ -2,6 +2,7 @@ package org.twinone.rubiksolver.robot;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -33,7 +34,7 @@ public class SlightlyMoreAdvancedMapper {
         for (int i = 0; i < turns; i++) a = cross(a, rotation);
         return a;
     }
-    static class CubeOrientation {
+    public static class CubeOrientation {
         final int[] R;
         final int[] U;
         final int[] F;
@@ -58,6 +59,45 @@ public class SlightlyMoreAdvancedMapper {
             int[] v = axis[idx/2];
             if (idx % 2 != 0) v = new int[] {-v[0], -v[1], -v[2]};
             return v;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 19 * hash + Arrays.deepHashCode(this.axis);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final CubeOrientation other = (CubeOrientation) obj;
+            return Arrays.deepEquals(this.axis, other.axis);
+        }
+        
+        public int[][] findOptimalPath(CubeOrientation target, int depth) {
+            if (this.equals(target)) return new int[0][];
+            int[][] bestCandidate = null;
+            if (depth > 0) {
+                for (int axis = 0; axis < 2; axis++)
+                for (int turn : new int[]{ -1, +1 }) {
+                    int[] rotation = new int[3];
+                    rotation[axis] = turn;
+                    int[][] candidate = findOptimalPath(target, depth - 1);
+                    if (candidate != null && (bestCandidate == null || candidate.length+1 < bestCandidate.length)) {
+                        bestCandidate = new int[candidate.length+1][];
+                        bestCandidate[0] = rotation;
+                        System.arraycopy(candidate, 0, bestCandidate, 1, candidate.length);
+                        if (candidate.length == 0) break;
+                    }
+                }
+            }
+            return bestCandidate;
         }
     }
     
@@ -182,7 +222,8 @@ public class SlightlyMoreAdvancedMapper {
     }
     
     public void resetOrientation(List<RequestTag> tags) {
-        // TODO
+        for (int[] rotation : orientation.findOptimalPath(CubeOrientation.RESET, 4))
+            rotateAxis(tags, getAxis(rotation) == 1, (rotation[0] + rotation[1]) > 0);
     }
     
     public static void parallelize(Queue<Request> result, Iterator<Request>... requests) {
