@@ -29,7 +29,7 @@ public class SimpleRobotMapper {
 
     // Rotation-specific
     protected int turnAngle = 103;
-    protected int overshootAngle = 5;
+    protected int[] overshootAngle = { 5, 5, 5, 5 };
     protected int recoverAngle = -10;
 
 
@@ -211,7 +211,7 @@ public class SimpleRobotMapper {
             
             // First chunk: rotate the face, overshooting, delay, then recover
             chunks.add(new Request[] {
-                    rotateSide(side, forward ? 1 : 0, overshootAngle),
+                    rotateSide(side, forward ? 1 : 0, overshootAngle[side]),
                     new DelayRequest(calculateDelay(false, false, false, true, false)),
                     rotateSide(side, forward ? 1 : 0, recoverAngle),
                     new DelayRequest(calculateDelay(false, false, false, false, true)),
