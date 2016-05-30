@@ -211,7 +211,7 @@ public class SimpleController {
             for (Request r : requests)
                 if (r instanceof DelayRequest) totalTime += ((DelayRequest)r).getDelay();
             int totalSeconds = (int)Math.round(totalTime / 1000.0);
-            System.out.printf("Theorical time:\n - total: %dms (%02d:%02d)\n - per move: %dms\n - per pre-mapped move: %dms\n", totalTime, (int)Math.floor(totalTime/60), (int)totalTime % 60, totalTime/moves.size(), totalTime/preMappedMoves.size());
+            System.out.printf("Theorical time:\n - total: %dms (%02d:%02d)\n - per move: %dms\n - per pre-mapped move: %dms\n", totalTime, (int)Math.floor(totalSeconds/60), (int)totalSeconds % 60, totalTime/moves.size(), totalTime/preMappedMoves.size());
             
             algorithmProgressBar.setValue(0);
             algorithmProgressBar.setMaximum(requests.size());

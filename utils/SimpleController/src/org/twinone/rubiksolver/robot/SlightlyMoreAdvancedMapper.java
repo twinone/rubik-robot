@@ -31,7 +31,7 @@ public class SlightlyMoreAdvancedMapper {
         if (getAxis(rotation) == getAxis(a)) return a;
         int turns = Math.abs(rotation[0] + rotation[1] + rotation[2]);
         rotation = new int[]{(int)Math.signum(rotation[0]), (int)Math.signum(rotation[1]), (int)Math.signum(rotation[2])};
-        for (int i = 0; i < turns; i++) a = cross(a, rotation);
+        for (int i = 0; i < turns; i++) a = cross(rotation, a);
         return a;
     }
     public static class CubeOrientation {
@@ -88,7 +88,7 @@ public class SlightlyMoreAdvancedMapper {
                 for (int turn : new int[]{ -1, +1 }) {
                     int[] rotation = new int[3];
                     rotation[axis] = turn;
-                    int[][] candidate = findOptimalPath(target, depth - 1);
+                    int[][] candidate = rotate(rotation).findOptimalPath(target, depth - 1);
                     if (candidate != null && (bestCandidate == null || candidate.length+1 < bestCandidate.length)) {
                         bestCandidate = new int[candidate.length+1][];
                         bestCandidate[0] = rotation;
@@ -185,7 +185,7 @@ public class SlightlyMoreAdvancedMapper {
         requests.addAll(result);
         
         int[] rotation = new int[3];
-        rotation[logicalAxis ? 1 : 0] = reverse ? +1 : -1;
+        rotation[logicalAxis ? 1 : 0] = (reverse != logicalAxis) ? +1 : -1;
         orientation = orientation.rotate(rotation);
     }
     
