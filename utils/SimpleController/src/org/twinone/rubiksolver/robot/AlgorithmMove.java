@@ -22,14 +22,19 @@ public class AlgorithmMove {
             algorithm = algorithm.trim();
             if (algorithm.length() == 0) break;
             char face = algorithm.charAt(0);
-            boolean reverse = false;
+            boolean reverse = false, doubleMove = false;
             if ("ULFRBDXYZMSE".indexOf(face) == -1) throw new IllegalArgumentException();
             algorithm = algorithm.substring(1);
             if (algorithm.length() > 0 && algorithm.charAt(0) == '\'') {
                 algorithm = algorithm.substring(1);
                 reverse = true;
             }
+            if (algorithm.length() > 0 && algorithm.charAt(0) == '2') {
+                algorithm = algorithm.substring(1);
+                doubleMove = true;
+            }
             moves.add(new AlgorithmMove(face, reverse));
+            if (doubleMove) moves.add(new AlgorithmMove(face, reverse));
         }
         return moves;
     }
