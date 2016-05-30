@@ -13,6 +13,28 @@ import java.util.List;
  * Maps algorithm moves to backend requests.
  */
 public class SimpleRobotMapper {
+    public static class RequestTag {
+        // Equivalent move executed in the cube
+        AlgorithmMove move;
+        // Requests that perform this move
+        Request[] requests;
+        // Time it takes for `move` to execute
+        int time;
+    }
+    
+    private static Request[] tag(List<RequestTag> tags, Request[] reqs, AlgorithmMove move) {
+        if (tags != null) {
+            int time = 0;
+            for (Request req : reqs)
+                if (req instanceof DelayRequest) time += ((DelayRequest) req).getDelay();
+            RequestTag tag = new RequestTag();
+            tag.requests = reqs;
+            tag.move = move;
+            tag.time = time;
+            tags.add(tag);
+        }
+        return reqs;
+    }
 
     //FIXME: accessors for this
     
@@ -180,9 +202,10 @@ public class SimpleRobotMapper {
      * their reverses. To map arbitrary moves, use {@link SimpleRobotMapper#map(Iterable)}
      *
      * @param requests Resulting requests will be appended to this list.
+     * @param tags Optional list where request tags will be put
      * @param move Move to map
      */
-    public void map(List<Request> requests, AlgorithmMove move) {
+    public void map(List<Request> requests, List<RequestTag> tags, AlgorithmMove move) {
         List<Request[]> chunks = new ArrayList<>();
         boolean forward = !move.reverse;
 
@@ -193,7 +216,7 @@ public class SimpleRobotMapper {
             // First chunk: ungrab the other axis so we can rotate the cube
             chunks.add(gripAxis(!axis, forward ? false : true));
             // Second chunk: rotate the cube with the main axis
-            chunks.add(rotateAxis(axis, forward ? 1 : 0));
+            chunks.add(tag(tags, rotateAxis(axis, forward ? 1 : 0), move));
             // Third chunk: grab the cube with the other axis again
             chunks.add(gripAxis(!axis, forward ? true : false));
             // Fourth chunk: ungrab with the main axis so we can reset
@@ -210,12 +233,12 @@ public class SimpleRobotMapper {
             if (side == 1 || side == 2) forward = !forward;
             
             // First chunk: rotate the face, overshooting, delay, then recover
-            chunks.add(new Request[] {
+            chunks.add(tag(tags, new Request[] {
                     rotateSide(side, forward ? 1 : 0, overshootAngle[side]),
                     new DelayRequest(calculateDelay(false, false, false, true, false)),
                     rotateSide(side, forward ? 1 : 0, recoverAngle),
                     new DelayRequest(calculateDelay(false, false, false, false, true)),
-            });
+            }, move));
             // Second chunk: ungrab the side to reset
             chunks.add(new Request[] {
                     gripSide(side, forward ? false : true, 0),
@@ -246,13 +269,14 @@ public class SimpleRobotMapper {
      * and at position 0 (vertical).
      *
      * @param algorithm Algorithm to translate
+     * @param tags Optional list where request tags will be put
      * @return List of backend requests
      */
-    public List<Request> map(Iterable<AlgorithmMove> algorithm) {
+    public List<Request> map(Iterable<AlgorithmMove> algorithm, List<RequestTag> tags) {
         List<Request> requests = new ArrayList<>();
         for (AlgorithmMove rootMove : algorithm)
             for (AlgorithmMove move : preMap(rootMove))
-                map(requests, move);
+                map(requests, tags, move);
         return requests;
     }
 

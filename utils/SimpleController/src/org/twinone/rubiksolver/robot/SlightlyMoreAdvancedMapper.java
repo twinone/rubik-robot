@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import org.twinone.rubiksolver.robot.SimpleRobotMapper.RequestTag;
 import org.twinone.rubiksolver.robot.comm.DelayRequest;
 import org.twinone.rubiksolver.robot.comm.Request;
 
@@ -123,24 +124,24 @@ public class SlightlyMoreAdvancedMapper {
     public SimpleRobotMapper mapper = new SimpleRobotMapper();
     public Queue<Request> requests = new ArrayDeque<>();
     
-    public List<Request> executeTurns(int side, int turns) {
+    public List<Request> executeTurns(List<RequestTag> tags, int side, int turns) {
         List<Request> result = new ArrayList<>();
         char face = "RBLF".charAt(side % 4);
         turns = ((turns % 4) + 4) % 4;
         if (turns == 1) {
-            mapper.map(result, new AlgorithmMove(face, false));
+            mapper.map(result, tags, new AlgorithmMove(face, false));
         } else if (turns == 2) {
-            mapper.map(result, new AlgorithmMove(face, false));
-            mapper.map(result, new AlgorithmMove(face, false));
+            mapper.map(result, tags, new AlgorithmMove(face, false));
+            mapper.map(result, tags, new AlgorithmMove(face, false));
         } else if (turns == 3) {
-            mapper.map(result, new AlgorithmMove(face, true));
+            mapper.map(result, tags, new AlgorithmMove(face, true));
         }
         return result;
     }
     
-    public void rotateAxis(boolean logicalAxis, boolean reverse) {
+    public void rotateAxis(List<RequestTag> tags, boolean logicalAxis, boolean reverse) {
         List<Request> result = new ArrayList<>();
-        mapper.map(result, new AlgorithmMove(logicalAxis ? 'Z' : 'X', reverse));
+        mapper.map(result, tags, new AlgorithmMove(logicalAxis ? 'Z' : 'X', reverse));
         requests.addAll(result);
         
         int[] rotation = new int[3];
@@ -148,7 +149,7 @@ public class SlightlyMoreAdvancedMapper {
         orientation = orientation.rotate(rotation);
     }
     
-    public void processDoubleChunks(List<DoubleChunk> places) {
+    public void processDoubleChunks(List<RequestTag> tags, List<DoubleChunk> places) {
         for (DoubleChunk place : places) {
             
             // Ensure the axis in this place are visible
@@ -160,27 +161,27 @@ public class SlightlyMoreAdvancedMapper {
                 // If this axis is visible, make it the non-visible axis
                 if (orientation.axis[otherAxis][2] == 0) {
                     boolean logicalAxis = orientation.axis[otherAxis][1] != 0;
-                    rotateAxis(!logicalAxis, false);
+                    rotateAxis(tags, !logicalAxis, false);
                 }
             } else if (place.axis.size() == 1) {
                 Integer axis = place.axis.iterator().next();
                 if (orientation.axis[axis][2] != 0) {
                     // The axis is the non-visible one, any rotation will do
-                    rotateAxis(false, false);
+                    rotateAxis(tags, false, false);
                 }
             }
             
             for (Chunk chunk : place.chunks) {
                 int[] v = orientation.axis[chunk.axis];
                 int side = getAxis(v) + v[0] + v[1] + 1 + 2;
-                List<Request> positiveRequests = executeTurns(side, chunk.positiveSideTurns);
-                List<Request> negativeRequests = executeTurns(side + 2, chunk.negativeSideTurns);
+                List<Request> positiveRequests = executeTurns(tags, side, chunk.positiveSideTurns);
+                List<Request> negativeRequests = executeTurns(tags, side + 2, chunk.negativeSideTurns);
                 parallelize(requests, positiveRequests.iterator(), negativeRequests.iterator());
             }
         }
     }
     
-    public void resetOrientation() {
+    public void resetOrientation(List<RequestTag> tags) {
         // TODO
     }
     
@@ -226,15 +227,15 @@ public class SlightlyMoreAdvancedMapper {
         if (maxTime > time) result.add(new DelayRequest((short) (maxTime - time))); //FIXME
     }
     
-    public List<Request> map(List<AlgorithmMove> algorithm, boolean resetOrientation) {
+    public List<Request> map(List<AlgorithmMove> algorithm, boolean resetOrientation, List<RequestTag> tags) {
         List<Chunk> chunks = new ArrayList<>();
         SlightlyMoreAdvancedMapper.processMoves(chunks, algorithm.iterator());
         
         List<DoubleChunk> places = new ArrayList<>();
         SlightlyMoreAdvancedMapper.processChunks(places, chunks);
         
-        processDoubleChunks(places);
-        if (resetOrientation) resetOrientation();
+        processDoubleChunks(tags, places);
+        if (resetOrientation) resetOrientation(tags);
         
         List<Request> result = new ArrayList<>();
         while (!requests.isEmpty())
