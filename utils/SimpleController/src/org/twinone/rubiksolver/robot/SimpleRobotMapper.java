@@ -1,6 +1,5 @@
 package org.twinone.rubiksolver.robot;
 
-import org.twinone.rubiksolver.robot.AlgorithmMove;
 import org.twinone.rubiksolver.robot.comm.DelayRequest;
 import org.twinone.rubiksolver.robot.comm.Request;
 import org.twinone.rubiksolver.robot.comm.WriteRequest;
@@ -76,6 +75,7 @@ public class SimpleRobotMapper {
     
     /**
      * Map an algorithm move to other algorithm moves that can be mapped and are equivalent.
+     * @param move move to premap
      * @return suitable algorithm moves
      */
     public static AlgorithmMove[] preMap(AlgorithmMove move) {
@@ -169,6 +169,7 @@ public class SimpleRobotMapper {
      * Generate a chunk of backend requests to grip (or ungrip) an axis.
      *
      * @param axis Axis to grip (false = horizontal, true = vertical)
+     * @param gripped true to grip axis, false to ungrip
      * @return Chunk of backend requests
      */
     public Request[] gripAxis(boolean axis, boolean gripped) {
@@ -183,6 +184,7 @@ public class SimpleRobotMapper {
      * Generate a chunk of backend requests to grip (or ungrip) an axis.
      *
      * @param axis Axis to grip (false = horizontal, true = vertical)
+     * @param position Position to rotate axis to
      * @return Chunk of backend requests
      */
     public Request[] rotateAxis(boolean axis, int position) {

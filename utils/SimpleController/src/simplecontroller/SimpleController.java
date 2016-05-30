@@ -197,8 +197,8 @@ public class SimpleController {
             String alg = algorithmField.getText();
             List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
 
-            //final List<Request> requests = mapper.map(moves);
-            final List<Request> requests = advancedMapper.map(moves);
+            //final List<Request> requests = mapper.map(moves, null);
+            final List<Request> requests = advancedMapper.map(moves, true, null);
             if (requests.isEmpty()) return;
             
             List<AlgorithmMove> preMappedMoves = new ArrayList<>();
@@ -274,16 +274,16 @@ public class SimpleController {
             OutputStream output = new FileOutputStream(dev);
             
             System.out.println("Sending probe to the robot...");
-            Packet.write(output, new ResumeRequest());
-            output.flush();
-            Packet.checkResponse(input);
+            //Packet.write(output, new ResumeRequest());
+            //output.flush();
+            //Packet.checkResponse(input);
             System.out.println("Robot is alive and speaking to us.");
             
             RobotScheduler scheduler = new RobotScheduler(input, output, 1);
             SimpleController c = new SimpleController(scheduler);
         } catch (IOException ex) {
-            Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (FailedResponseException ex) {
+        //    Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
+        //} catch (FailedResponseException ex) {
             Logger.getLogger(SimpleController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
