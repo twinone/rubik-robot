@@ -180,6 +180,10 @@ public class SlightlyMoreAdvancedMapper {
         }
     }
     
+    public void resetOrientation() {
+        // TODO
+    }
+    
     public static void parallelize(Queue<Request> result, Iterator<Request>... requests) {
         class TimedRequest {
             int time;
@@ -222,7 +226,7 @@ public class SlightlyMoreAdvancedMapper {
         if (maxTime > time) result.add(new DelayRequest((short) (maxTime - time))); //FIXME
     }
     
-    public List<Request> map(List<AlgorithmMove> algorithm) {
+    public List<Request> map(List<AlgorithmMove> algorithm, boolean resetOrientation) {
         List<Chunk> chunks = new ArrayList<>();
         SlightlyMoreAdvancedMapper.processMoves(chunks, algorithm.iterator());
         
@@ -230,6 +234,7 @@ public class SlightlyMoreAdvancedMapper {
         SlightlyMoreAdvancedMapper.processChunks(places, chunks);
         
         processDoubleChunks(places);
+        if (resetOrientation) resetOrientation();
         
         List<Request> result = new ArrayList<>();
         while (!requests.isEmpty())
