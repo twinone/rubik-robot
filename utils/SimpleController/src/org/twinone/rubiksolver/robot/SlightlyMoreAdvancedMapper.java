@@ -106,9 +106,8 @@ public class SlightlyMoreAdvancedMapper {
         int positiveSideTurns;
         int negativeSideTurns;
     }
-    public static void processMoves(List<Chunk> result, Iterator<AlgorithmMove> moves) {
+    public static CubeOrientation processMoves(List<Chunk> result, CubeOrientation orientation, Iterator<AlgorithmMove> moves) {
         List<Chunk> chunks = new ArrayList<>();
-        CubeOrientation orientation = CubeOrientation.RESET;
         while (moves.hasNext()) {
             AlgorithmMove move = moves.next();
             
@@ -139,6 +138,7 @@ public class SlightlyMoreAdvancedMapper {
         for (Chunk chunk : chunks)
             if (chunk.positiveSideTurns != 0 || chunk.negativeSideTurns != 0)
                 result.add(chunk);
+        return orientation;
     }
     
     public static class DoubleChunk {
@@ -221,9 +221,10 @@ public class SlightlyMoreAdvancedMapper {
         }
     }
     
-    public void resetOrientation(List<RequestTag> tags) {
-        for (int[] rotation : orientation.findOptimalPath(CubeOrientation.RESET, 4))
+    public void rotateTo(CubeOrientation target, List<RequestTag> tags) {
+        for (int[] rotation : orientation.findOptimalPath(target, 4))
             rotateAxis(tags, getAxis(rotation) == 1, (rotation[0] + rotation[1]) > 0);
+        orientation = target;
     }
     
     public static void parallelize(Queue<Request> result, Iterator<Request>... requests) {
@@ -270,13 +271,16 @@ public class SlightlyMoreAdvancedMapper {
     
     public List<Request> map(List<AlgorithmMove> algorithm, boolean resetOrientation, List<RequestTag> tags) {
         List<Chunk> chunks = new ArrayList<>();
-        SlightlyMoreAdvancedMapper.processMoves(chunks, algorithm.iterator());
+        CubeOrientation target = SlightlyMoreAdvancedMapper.processMoves(chunks, orientation, algorithm.iterator());
         
         List<DoubleChunk> places = new ArrayList<>();
         SlightlyMoreAdvancedMapper.processChunks(places, chunks);
         
         processDoubleChunks(tags, places);
-        if (resetOrientation) resetOrientation(tags);
+        if (resetOrientation) {
+          rotateTo(tags, target);
+          orientation = CubeOrientation.RESET;
+        }
         
         List<Request> result = new ArrayList<>();
         while (!requests.isEmpty())
