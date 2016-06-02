@@ -23,6 +23,7 @@ var cube = new Cube(canvas, {
 
   moveEndListener: function(move) {
     controls.state = cube.getState();
+    Android.moveEnd(move, controls.state);
   },
 });
 
@@ -102,15 +103,20 @@ function solve() {
 }
 
 var cubejsSolver;
+var pendingSolves = [];
 solver.createCubejsSolver(function (s) {
   cubejsSolver = s;
+  pendingSolves.forEach(cubejsSolve);
+  delete pendingSolves;
   Android.ready();
 });
 
-function fastSolve(state) {
+function cubejsSolve(state) {
+  if (!cubejsSolver) return pendingSolves.push();
   cubejsSolver.solve(state, function (alg) {
     Android.solved(state, alg);
   });
 }
+cube.cubejsSolve = cubejsSolve;
 
 module.exports = cube;
