@@ -38,9 +38,9 @@ public class SimpleRobotMapper {
     //FIXME: accessors for this
     
     protected int[] calibrationOffset = {
-        138,  46,
+        138,  43,
         146, 119,
-         98, 123,
+         92, 133,
         150,  24,
     };
 
@@ -50,7 +50,7 @@ public class SimpleRobotMapper {
 
     // Rotation-specific
     protected int turnAngle = 103;
-    protected int[] overshootAngle = { 5, 5, 5, 5 };
+    protected int[] overshootAngle = { 10, 5, 5, 8 };
     protected int recoverAngle = -10;
 
 
