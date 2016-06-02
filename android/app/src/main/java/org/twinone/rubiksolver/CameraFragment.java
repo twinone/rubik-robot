@@ -22,6 +22,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.twinone.rubiksolver.model.CapturedFace;
 import org.twinone.rubiksolver.model.Sticker;
 import org.twinone.rubiksolver.robot.AlgorithmMove;
 import org.twinone.rubiksolver.robot.SimpleRobotMapper;

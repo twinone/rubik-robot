@@ -12,8 +12,9 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.Surface;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.Toast;
+
+import org.twinone.rubiksolver.model.CapturedFace;
 
 /**
  * Created by twinone on 6/30/15.

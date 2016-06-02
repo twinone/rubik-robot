@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver;
+package org.twinone.rubiksolver.util;
 
 import android.content.Context;
 import android.util.Log;
@@ -38,13 +38,9 @@ public class JSWebView extends WebView {
                 "res = JSON.stringify(res);" +
                 "AndroidJavascriptCallback.onResult(" + id + ", res);" +
                 "} catch (e) {" +
-                "console.log('Error running from java:', e)" +
+                "console.error('Error running from java:', e)" +
                 "}";
-
-        Log.i("CubeWebView", "callJavaScript: call=" + call);
-
         loadUrl(call);
-
 
         synchronized (mPendingCalls) {
             while (!mPendingCalls.containsKey(id)) {
@@ -64,16 +60,13 @@ public class JSWebView extends WebView {
 
     @JavascriptInterface
     public void onResult(int id, String res) {
-        Log.d("CubeWebView", "OnResult for id=" + id + "  res=" + res);
-
         synchronized (mPendingCalls) {
             mPendingCalls.put(id, res);
             mPendingCalls.notifyAll();
         }
     }
 
-
-    private String constructFunction(String function, Object... params) {
+    protected static String constructFunction(String function, Object... params) {
         StringBuilder sb = new StringBuilder();
         sb.append(function);
         sb.append("(");
@@ -82,12 +75,11 @@ public class JSWebView extends WebView {
             sb.append(separator);
             separator = ",";
             if (param instanceof String) sb.append("'");
-
+            //FIXME: use gson or escape it someway?
             sb.append(param);
             if (param instanceof String) sb.append("'");
         }
         return sb.append(")").toString();
     }
-
 
 }
