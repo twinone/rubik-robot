@@ -14,11 +14,11 @@ import java.util.List;
 public class SimpleRobotMapper {
     public static class RequestTag {
         // Equivalent move executed in the cube
-        AlgorithmMove move;
+        public AlgorithmMove move;
         // Requests that perform this move
-        Request[] requests;
+        public Request[] requests;
         // Time it takes for `move` to execute
-        int time;
+        public int time;
     }
     
     private static Request[] tag(List<RequestTag> tags, Request[] reqs, AlgorithmMove move) {

@@ -52,12 +52,16 @@ public class AlgorithmMove {
     public static String format(Iterable<AlgorithmMove> algorithm) {
         String tokens = "";
         for (AlgorithmMove move : algorithm) {
-            String token = String.valueOf(move.face);
-            if (move.reverse) token += "'";
             if (tokens.length() > 0) tokens += " ";
-            tokens += token;
+            tokens += format(move);
         }
         return tokens;
+    }
+
+    public static String format(AlgorithmMove move) {
+        String token = String.valueOf(move.face);
+        if (move.reverse) token += "'";
+        return token;
     }
 
 }
