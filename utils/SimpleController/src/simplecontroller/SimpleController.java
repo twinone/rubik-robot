@@ -207,11 +207,24 @@ public class SimpleController {
             System.out.println("Performing algorithm: " + AlgorithmMove.format(moves));
             System.out.println("Pre-mapped algorithm: " + AlgorithmMove.format(preMappedMoves));
             
-            int totalTime = 0;
+            int totalTime = 0, delays = 0;
             for (Request r : requests)
-                if (r instanceof DelayRequest) totalTime += ((DelayRequest)r).getDelay();
+                if (r instanceof DelayRequest) {
+                    totalTime += ((DelayRequest)r).getDelay();
+                    delays++;
+                }
             int totalSeconds = (int)Math.round(totalTime / 1000.0);
-            System.out.printf("Theorical time:\n - total: %dms (%02d:%02d)\n - per move: %dms\n - per pre-mapped move: %dms\n", totalTime, (int)Math.floor(totalSeconds/60), (int)totalSeconds % 60, totalTime/moves.size(), totalTime/preMappedMoves.size());
+            System.out.printf("Theoretical time:\n"
+                    + "- total: %dms (%02d:%02d)\n"
+                    + "- per move (%d): %dms\n"
+                    + "- per pre-mapped move (%d): %dms\n"
+                    + "- per request (%d): %dms\n"
+                    + "- per delay request (%d): %dms\n",
+                    totalTime, (int)Math.floor(totalSeconds/60), (int)totalSeconds % 60,
+                    moves.size(), moves.isEmpty() ? 0 : totalTime/moves.size(),
+                    preMappedMoves.size(), preMappedMoves.isEmpty() ? 0 : totalTime/preMappedMoves.size(),
+                    requests.size(), totalTime/requests.size(),
+                    delays, (delays == 0) ? 0 : totalTime / delays);
             
             algorithmProgressBar.setValue(0);
             algorithmProgressBar.setMaximum(requests.size());
