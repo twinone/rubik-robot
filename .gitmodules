@@ -1,0 +1,3 @@
+[submodule "android/app/src/main/assets/rubik-web"]
+	path = android/app/src/main/assets/rubik-web
+	url = https://github.com/twinone/rubik-web.git
