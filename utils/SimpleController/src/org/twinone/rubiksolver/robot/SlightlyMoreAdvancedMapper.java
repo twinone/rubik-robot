@@ -16,7 +16,7 @@ import org.twinone.rubiksolver.robot.comm.Request;
 
 /**
  * This mapper tries to minimize cube rotations, and parallelizes
- * face rotations. This is dirty code, somehow temporary.
+ * face rotations. This is extremely dirty code, somehow temporary.
  */
 public class SlightlyMoreAdvancedMapper {
     
@@ -33,6 +33,12 @@ public class SlightlyMoreAdvancedMapper {
         rotation = new int[]{(int)Math.signum(rotation[0]), (int)Math.signum(rotation[1]), (int)Math.signum(rotation[2])};
         for (int i = 0; i < turns; i++) a = cross(rotation, a);
         return a;
+    }
+    public static int[] multiply(int[] a, int m) {
+        int[] r = new int[a.length];
+        for (int i = 0; i < a.length; i++)
+            r[i] = a[i] * m;
+        return r;
     }
     public static class CubeOrientation {
         final int[] R;
@@ -57,7 +63,7 @@ public class SlightlyMoreAdvancedMapper {
             int idx = "RLUDFB".indexOf(face);
             if (idx == -1) return null;
             int[] v = axis[idx/2];
-            if (idx % 2 != 0) v = new int[] {-v[0], -v[1], -v[2]};
+            if (idx % 2 != 0) v = multiply(v, -1);
             return v;
         }
 
@@ -99,6 +105,15 @@ public class SlightlyMoreAdvancedMapper {
             }
             return bestCandidate;
         }
+        
+        public CubeOrientation copyRotation(CubeOrientation from, CubeOrientation to) {
+            // FIXME: better implement this
+            CubeOrientation result = this;
+            for (int[] rotation : from.findOptimalPath(to, 4))
+                result = result.rotate(rotation);
+            return result;
+        }
+        
     }
     
     public static class Chunk {
@@ -106,7 +121,8 @@ public class SlightlyMoreAdvancedMapper {
         int positiveSideTurns;
         int negativeSideTurns;
     }
-    public static CubeOrientation processMoves(List<Chunk> result, CubeOrientation orientation, Iterator<AlgorithmMove> moves) {
+    public static CubeOrientation processMoves(List<Chunk> result, Iterator<AlgorithmMove> moves) {
+        CubeOrientation orientation = CubeOrientation.RESET;
         List<Chunk> chunks = new ArrayList<>();
         while (moves.hasNext()) {
             AlgorithmMove move = moves.next();
@@ -114,21 +130,25 @@ public class SlightlyMoreAdvancedMapper {
             // Axis rotation: just change reference
             int axis = "XYZ".indexOf(move.face);
             if (axis != -1) {
-                int[] rotation = new int[3];
-                rotation[axis] = move.reverse ? -1 : +1;
+                int[] rotation = CubeOrientation.RESET.axis[axis];
+                if (move.reverse) rotation = multiply(rotation, -1);
                 orientation = orientation.rotate(rotation);
                 continue;
             }
             
             // Face moves
-            int idx = "RLUDFB".indexOf(move.face);
-            if (idx != -1) {
-                if (chunks.isEmpty() || chunks.get(chunks.size()-1).axis != idx/2)
+            int[] vector = orientation.getFace(move.face);
+            if (vector != null) {
+                axis = 0;
+                while (getAxis(vector) != getAxis(CubeOrientation.RESET.axis[axis])) axis++;
+                boolean positive = Arrays.equals(vector, CubeOrientation.RESET.axis[axis]);
+                
+                if (chunks.isEmpty() || chunks.get(chunks.size()-1).axis != axis)
                     chunks.add(new Chunk());
                 Chunk c = chunks.get(chunks.size()-1);
-                c.axis = idx/2;
+                c.axis = axis;
                 int turn = move.reverse ? -1 : +1;
-                if (idx % 2 == 0) c.positiveSideTurns += turn;
+                if (positive) c.positiveSideTurns += turn;
                 else c.negativeSideTurns += turn;
                 continue;
             }
@@ -223,8 +243,8 @@ public class SlightlyMoreAdvancedMapper {
     
     public void rotateTo(CubeOrientation target, List<RequestTag> tags) {
         for (int[] rotation : orientation.findOptimalPath(target, 4))
-            rotateAxis(tags, getAxis(rotation) == 1, (rotation[0] + rotation[1]) > 0);
-        orientation = target;
+            rotateAxis(tags, getAxis(rotation) == 1, ((rotation[0] + rotation[1]) > 0) != (getAxis(rotation) == 1));
+        assert(orientation.equals(target));
     }
     
     public static void parallelize(Queue<Request> result, Iterator<Request>... requests) {
@@ -271,16 +291,15 @@ public class SlightlyMoreAdvancedMapper {
     
     public List<Request> map(List<AlgorithmMove> algorithm, boolean resetOrientation, List<RequestTag> tags) {
         List<Chunk> chunks = new ArrayList<>();
-        CubeOrientation target = SlightlyMoreAdvancedMapper.processMoves(chunks, orientation, algorithm.iterator());
+        CubeOrientation o = SlightlyMoreAdvancedMapper.processMoves(chunks, algorithm.iterator());
         
         List<DoubleChunk> places = new ArrayList<>();
         SlightlyMoreAdvancedMapper.processChunks(places, chunks);
         
         processDoubleChunks(tags, places);
-        if (resetOrientation) {
-          rotateTo(tags, target);
-          orientation = CubeOrientation.RESET;
-        }
+        orientation = orientation.copyRotation(CubeOrientation.RESET, o);
+        
+        if (resetOrientation) rotateTo(CubeOrientation.RESET, tags);
         
         List<Request> result = new ArrayList<>();
         while (!requests.isEmpty())
