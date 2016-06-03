@@ -339,7 +339,7 @@
 	    this.labelMargin = options.labelMargin || defaults.labelMargin;
 
 	    this.colors = options.colors || defaults.colors;
-	    this.stickers = options.stickers || defaults.stickers;
+	    this._setStickers(options.stickers || defaults.stickers);
 
 	    this.cubies = [];
 	    this.active = null; // init
@@ -387,6 +387,33 @@
 	    if (options.state) this.setState(options.state);
 	};
 
+	// converts a sticker array [ULFRBD] to an object {1,2,3,-1,-2,-3} used internally
+	Cube.prototype._setStickers = function _setStickers(stickers) {
+	  var out = {};
+	  out[Face.UP]    = stickers[0];
+	  out[Face.LEFT]  = stickers[1];
+	  out[Face.FRONT] = stickers[2];
+	  out[Face.RIGHT] = stickers[3];
+	  out[Face.BACK]  = stickers[4];
+	  out[Face.DOWN]  = stickers[5];
+	  this.stickers = out;
+	}
+
+	Cube.prototype.setStickerColors = function setStickerColors(colors) {
+	  if (!(colors instanceof Array) || colors.length != 6)
+	    throw Error("colors must be an array of length 6");
+
+	  this._setStickers(colors);
+
+	  for (var i = 0; i < this.size; i++) {
+	      for (var j = 0; j < this.size; j++) {
+	          for (var k = 0; k < this.size; k++) {
+	              this.cubies[i][j][k].invalidateColors();
+	          }
+	      }
+	  }
+	}
+
 	Cube.prototype.isAnimating = function isAnimating() { return this.anim.animating; }
 
 	Cube.prototype.setAnimationDuration = function setAnimationDuration(duration) {
@@ -413,25 +440,19 @@
 	Where u means the "up" color.
 
 	*/
-	Cube.prototype.getState = function getState(fancy) {
+	Cube.prototype.getState = function getState() {
 	    var s = this.size;
 	    var faces = "";
-	    if (fancy) faces += "UP: ";
 	    for (var i = 0; i < s; i++) for (var j = 0; j < s; j++)
 	    faces += util.faceToChar(this.cubies[j][s-1-i][s-1].getSticker(Face.UP));
-	    if (fancy) faces += "<br>LEFT: ";
 	    for (var i = 0; i < s; i++) for (var j = 0; j < s; j++)
 	    faces += util.faceToChar(this.cubies[0][s-1-j][s-1-i].getSticker(Face.LEFT));
-	    if (fancy) faces += "<br>FRONT: ";
 	    for (var i = 0; i < s; i++) for (var j = 0; j < s; j++)
 	    faces += util.faceToChar(this.cubies[j][0][s-1-i].getSticker(Face.FRONT));
-	    if (fancy) faces += "<br>RIGHT: ";
 	    for (var i = 0; i < s; i++) for (var j = 0; j < s; j++)
 	    faces += util.faceToChar(this.cubies[s-1][j][s-1-i].getSticker(Face.RIGHT));
-	    if (fancy) faces += "<br>BACK: ";
 	    for (var i = 0; i < s; i++) for (var j = 0; j < s; j++)
 	    faces += util.faceToChar(this.cubies[s-1-j][s-1][s-1-i].getSticker(Face.BACK));
-	    if (fancy) faces += "<br>DOWN: ";
 	    for (var i = 0; i < s; i++) for (var j = 0; j < s; j++)
 	    faces += util.faceToChar(this.cubies[j][i][0].getSticker(Face.DOWN));
 	    return faces;
@@ -531,10 +552,9 @@
 	    var expectedLength = this.anim.queue.length + turns;
 
 	    while (this.anim.queue.length < expectedLength) {
-	        var face = randFace();
-	        var layer = randInt(0, this.size-1);
-	        var anim = new Animation(face, [layer]);
-	        this._enqueueAnimation(anim, false);
+	        var move = "ULFBRD".charAt(randInt(0, 5));
+	        if (randInt(0, 1) == 2) move += "'";
+	        this.algorithm(move);
 	        this._optimizeQueue();
 	    }
 	};
@@ -619,7 +639,6 @@
 	            this.cubies[i][j] = [];
 	            for (var k = 0; k < this.size; k++) {
 	                var cubie = new Cubie(cubieGeometry, map, this, i, j, k);
-	                cubie.setup(cubieGeometry, map);
 	                cubie.position.set(
 	                    (i-(this.size-1)/2) * this.cubieWidth*(1+this.cubieSpacing),
 	                    (j-(this.size-1)/2) * this.cubieWidth*(1+this.cubieSpacing),
@@ -858,42 +877,38 @@
 	    this.algorithm(alg);
 	};
 
-	Cube.prototype.algorithm = function algorithm(alg) {
+	Cube.prototype.algorithm = function _algorithm(alg) {
 	    var moves = alg.split(" ");
 	    for (var i = 0; i < moves.length; i++) {
 	        var move = moves[i].trim();
 	        if (move == "") continue;
 
-	        var p = 0;
-	        // process number
-	        // TODO
-	        // process letter
-	        var c = move.charAt(p++);
+	        var c = move.charAt(0);
 	        var face = util.charToFace(c);
 	        var axis = util.charToAxis(c);
+	        var rot = 1;
+	        var cw = !algorithm.isPrime(move);
+	        var two = algorithm.isTwo(move);
+	        if (two) rot *= 2;
 
-	        var cw = c == c.toUpperCase(); // uppercase letter is clockwise
-	        // process prime (inverts turn direction)
-	        c = move.charAt(p++);
-	        if (c == "'") cw = !cw;
 	        var layerNumber = 0;
 	        if (face) {
 	            var layer = (face == Face.FRONT || face == Face.LEFT || face == Face.DOWN)
 	            ? layerNumber
 	            : this.size -1 - layerNumber;
 	            var layers = [layer];
-	            this._enqueueAnimation(new Animation(cw ? face: -face, layers, move), false);
+	            this._enqueueAnimation(new Animation(cw ? face: -face, layers, move, rot), false);
 	        } else if (axis) {
 	            var layers = []; for (var j = 0; j < this.size; j++) layers.push(j);
-	            this._enqueueAnimation(new Animation(cw ? axis : -axis, layers, move), false);
+	            this._enqueueAnimation(new Animation(cw ? axis : -axis, layers, move, rot), false);
 	        }
 	    }
 	}
 
 
-	function Animation(axis, layers, move) {
+	function Animation(axis, layers, move, rot) {
 	    this.move = move;
-	    this.targetAngle = (PI/2);
+	    this.targetAngle = (PI/2) * Math.abs(rot);
 	    this.angle = 0;
 	    this.axisVector = util.faceToAxis(axis);
 	    this.axisVector.multiplyScalar(-1);
@@ -944,7 +959,7 @@
 	    }
 	    pct = this.anim.interpolator(pct);
 
-	    var angle = (PI/2) * pct;
+	    var angle = this.anim.current.targetAngle * pct;
 
 	    this.active.rotation.x = angle * this.anim.current.axisVector.x;
 	    this.active.rotation.y = angle * this.anim.current.axisVector.y;
@@ -959,10 +974,12 @@
 	    // Re-add items to the scene
 	    while (this.active.children.length > 0) {
 	        var child = this.active.children[0];
+	        var num = algorithm.isTwo(this.anim.current.move) ? 2 : 1;
+	        for (var n = 0; n < num; n++)
 	        child._rotateStickers(this.anim.current.axis);
 	        sceneutils.detach(child, this.active, this.scene);
 	    }
-	    this._updateCubiesRotation();
+	    this._updateCubiesRotation(this.anim.current.move);
 	    this._alignCubies();
 	    this.anim.animating = false;
 
@@ -971,10 +988,13 @@
 	    this.anim.current = undefined;
 	};
 
-	Cube.prototype._updateCubiesRotation = function _updateCubiesRotation() {
+	Cube.prototype._updateCubiesRotation = function _updateCubiesRotation(move) {
+	    var num = algorithm.isTwo(move) ? 2 : 1;
 	    var axis = this.anim.current.axis;
 	    var userCw = this.anim.current.axis > 0;
 	    var layers = this.anim.current.layers;
+
+	    for (var n = 0; n < num; n++)
 	    for (var i = 0; i < layers.length; i++) {
 	        util.rotateLayer(this.cubies, axis, layers[i], userCw);
 	    }
@@ -4004,6 +4024,7 @@
 	var util = __webpack_require__(7);
 	var Cube = __webpack_require__(3).Cube;
 	var Face = __webpack_require__(8).Face;
+	var faces = __webpack_require__(8).faces;
 	var Axis = __webpack_require__(8).Axis;
 
 	var facemap = {};
@@ -4045,7 +4066,6 @@
 	Cubie.prototype.getSticker = function getSticker(face) {
 	    return this.stickers[face];
 	}
-
 
 	Cubie.prototype.setSticker = function setSticker(face, sticker) {
 	  this.stickers[face] = sticker;
@@ -4094,13 +4114,6 @@
 	    }
 	}
 
-
-
-	Cubie.prototype.setup = function setup(cube, i, j, k) {
-
-
-	}
-
 	Cubie.prototype.roundRotation = function roundRotation() {
 	    this.rotation.x = intRound(mod(this.rotation.x, PI*2), PI/2);
 	    this.rotation.y = intRound(mod(this.rotation.y, PI*2), PI/2);
@@ -4139,31 +4152,45 @@
 	      wireframeLinewidth: 2,
 	      map: map,
 	  });
+	  var self = this;
+	  function mat(face) {
+	    return self.stickers[face] ?
+	       getStickerMaterial(self.cube.stickers[self.stickers[face]], map, wf) : d;
+	  }
 	  var materials = [
 	      // R L B F U D
-	      this.stickers[Face.RIGHT] ? getStickerMaterial(this.cube.stickers[this.stickers[Face.RIGHT]], map, wf) : d,
-	      this.stickers[Face.LEFT]  ? getStickerMaterial(this.cube.stickers[this.stickers[Face.LEFT]],  map, wf) : d,
-	      this.stickers[Face.BACK]  ? getStickerMaterial(this.cube.stickers[this.stickers[Face.BACK]],  map, wf) : d,
-	      this.stickers[Face.FRONT] ? getStickerMaterial(this.cube.stickers[this.stickers[Face.FRONT]], map, wf) : d,
-	      this.stickers[Face.UP]    ? getStickerMaterial(this.cube.stickers[this.stickers[Face.UP]],    map, wf) : d,
-	      this.stickers[Face.DOWN]  ? getStickerMaterial(this.cube.stickers[this.stickers[Face.DOWN]],  map, wf) : d,
+	      mat(Face.RIGHT),
+	      mat(Face.LEFT),
+	      mat(Face.BACK),
+	      mat(Face.FRONT),
+	      mat(Face.UP),
+	      mat(Face.DOWN),
 	  ];
 	  return new THREE.MeshFaceMaterial(materials);
 	}
 
-
-
-
 	function getStickerMaterial(color, map, wireframe) {
-	    return new THREE.MeshBasicMaterial({
+	    var mat = new THREE.MeshBasicMaterial({
 	        color: color,
 	        map: map,
 	        wireframe: wireframe,
 	        wireframeLinewidth: 2,
 	        side: THREE.FrontSide
 	    });
+	    mat.isSticker = true;
+	    return mat;
 	}
 
+	Cubie.prototype.invalidateColor = function invalidateColor(face) {
+	  var dst = facemap[face];
+	  if (this.material.materials[dst].isSticker)
+	  this.material.materials[dst].color.setHex(this.cube.stickers[face]);
+	}
+	Cubie.prototype.invalidateColors = function invalidateColors() {
+	  for (var i = 0; i < faces.length; i++) {
+	    this.invalidateColor(faces[i]);
+	  }
+	};
 
 	module.exports = {
 	    Cubie: Cubie,
@@ -4179,11 +4206,13 @@
 	function random(length) {
 	    if (!length) length = 30;
 	    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-	    var turns = "ULFRBDulfrbdXYZ";
+	    var turns = "ULFRBD";
 	    var alg = [];
 	    while (alg.length < length) {
 	        var m = turns[randInt(0,turns.length-1)];
-	        if (randInt(0,1) == 1) m += "'";
+	        var n = randInt(0,2);
+	        if (n == 1) m += "2";
+	        if (n == 2) m += "'";
 	        alg.push(m);
 	        alg = optimize(alg);
 	    }
@@ -4253,12 +4282,29 @@
 	    else return move + "'";
 	}
 
+	function rot(move) {
+	  var rot = 1;
+	  if (isTwo(move)) rot *= 2;
+	  if (isPrime(move)) rot *= -1;
+	  return rot;
+	}
+
+	function isTwo(move) {
+	  return move.charAt(1) == '2';
+	}
+
+	function isPrime(move) {
+	  return move.charAt(move.length-1) == "'";
+	}
+
 	module.exports = {
 	    random: random,
 	    invert: invert,
 	    transform: transform,
 	    optimize: optimize,
-
+	    rot: rot,
+	    isTwo: isTwo,
+	    isPrime: isPrime,
 	};
 
 
@@ -4268,6 +4314,7 @@
 
 	var model = __webpack_require__(8);
 	var util = __webpack_require__(7);
+	var algorithm = __webpack_require__(12);
 
 	// Faces by their index
 	var FACES = ["U", "L", "F", "R", "B", "D"];
@@ -4350,12 +4397,14 @@
 	/*
 	Rotates layers around a face
 	*/
-	State.prototype.rotate = function rotate(face, cw, layers) {
+	State.prototype.rotate = function rotate(face, rot, layers) {
 	    if (layers == undefined) layers = [0];
-	    for (var i = 0; i < layers.length; i++) {
-	        if (layers[i] == 0) this._rotateFace(face, cw);
-	        if (layers[i] == this.size-1) this._rotateFace(util.opposite(face), !cw);
-	        this._rotateRing(face, layers[i], cw);
+	    for (var n = 0; n < ((rot%4+4)%4); n++) {
+	      for (var i = 0; i < layers.length; i++) {
+	          if (layers[i] == 0) this._rotateFace(face, true);
+	          if (layers[i] == this.size-1) this._rotateFace(util.opposite(face), false);
+	          this._rotateRing(face, layers[i], true);
+	      }
 	    }
 	}
 
@@ -4543,33 +4592,30 @@
 
 
 
-	State.prototype.algorithm = function algorithm(alg) {
+	State.prototype.algorithm = function _algorithm(alg) {
 	    //console.log("ALG:",alg);
 	    var moves = alg.split(" ");
 	    for (var i = 0; i < moves.length; i++) {
 	        var move = moves[i].trim();
 	        if (move == "") continue;
-	        var p = 0;
-	        var c = move.charAt(p++);
+
+	        var c = move.charAt(0);
 	        var face = c.toUpperCase();
-	        var axis = c;
-	        var cw = true;
 	        var upper = (c == c.toUpperCase()); // uppercase letter is clockwise
 	        // process prime (inverts turn direction)
-	        var prime = move.charAt(p++);
-	        if (prime == "'") cw = !cw;
+	        var rot = algorithm.rot(move);
 
 	        if (isFace(face)) {
 	            var layers = [0];
 	            if (!upper) layers.push(1);
-	        } else if (isAxis(axis)) {
+	        } else if (isAxis(c)) {
 	            var layers = []; for (var j = 0; j < this.size; j++) layers.push(j);
-	            face = axisToFace(axis);
+	            face = axisToFace(c);
 	        } else {
 	            console.log("Invalid move: " + move);
 	            continue;
 	        }
-	        this.rotate(face, cw, layers);
+	        this.rotate(face, rot, layers);
 	    }
 	}
 
@@ -4602,6 +4648,7 @@
 	function swap4CCW(v, i0, i1, i2, i3) { swap4CW(v, i3, i2, i1, i0); }
 	function swap4CW(v, i0, i1, i2, i3) { tmp = v[i3]; v[i3] = v[i2]; v[i2] = v[i1]; v[i1] = v[i0]; v[i0] = tmp; }
 
+	window.state = State;
 	module.exports = { State: State };
 
 
@@ -5039,13 +5086,14 @@
 
 	var Face = __webpack_require__(8).Face;
 
-	var stickers = {};
-	stickers[Face.RIGHT] = 0x009E60;
-	stickers[Face.LEFT] =  0x0051BA;
-	stickers[Face.BACK] =  0xFF5800;
-	stickers[Face.FRONT] = 0xC41E3A;
-	stickers[Face.UP] =    0xFFD500;
-	stickers[Face.DOWN] =  0xFFFFFF;
+	var stickers = [
+	  0xFFD500,
+	  0x0051BA,
+	  0xC41E3A,
+	  0x009E60,
+	  0xFF5800,
+	  0xFFFFFF,
+	];
 
 	var prod_defaults = {
 	    size: 3,
