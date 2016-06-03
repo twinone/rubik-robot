@@ -21,14 +21,19 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.twinone.rubiksolver.model.CapturedFace;
 import org.twinone.rubiksolver.model.Sticker;
 import org.twinone.rubiksolver.robot.AlgorithmMove;
+import org.twinone.rubiksolver.robot.RobotScheduler;
 import org.twinone.rubiksolver.robot.SimpleRobotMapper;
+import org.twinone.rubiksolver.robot.SlightlyMoreAdvancedMapper;
 import org.twinone.rubiksolver.robot.comm.DelayRequest;
 import org.twinone.rubiksolver.robot.comm.Request;
+import org.twinone.rubiksolver.robot.comm.Response;
 import org.twinone.rubiksolver.util.ColorUtil;
+import org.twinone.rubiksolver.util.MatrixUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,40 +44,45 @@ import java.util.List;
  * Created by twinone on 6/20/15.
  */
 @SuppressWarnings("deprecation")
-public class CameraFragment extends Fragment implements View.OnClickListener, FaceCapturer.Callback {
+public class CameraFragment extends Fragment implements View.OnClickListener, FaceCapturer.Callback, CubeWebView.SolveCallback {
 
-    private static final boolean DBG = true;
-    private static final String SOLVED = "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD";
-    private static final String DBG_STATE = SOLVED;
+    //TODO: separate button for gripping and scanning; also ungrip button
+    //TODO: implement progress bar for solving and executing
+    //TODO: verify state is solvable before attempting to solve
+    //FIXME: preload webview
+    //TODO: make lookAtFace and algorithm/setAnimationDuration work
+
+    private static final boolean DBG = false;
+    private static final String DBG_STATE = CubeWebView.SOLVED;
 
     private static final String TAG = "CameraFragment";
-    // The absolute difference between two colors such that we consider them to be different colors.
-    private static final double COLOR_ERROR_THRESHOLD = 8.0F;
-
     private static final double COLOR_ERROR_GAMMA = 2.2;
 
-    // We take square images
-    private static final int IMAGE_SIZE = 100;
-
     private FaceCapturer mFaceCapturer;
+    private Button mButtonGrip;
     private Button mButtonCapture;
     private Button mButtonSolve;
     private CubeWebView mCube;
 
+    private int mGrippedAxis = 0;
     private RelativeLayout mRootView;
     private CapturedFace[] mCapturedFaces = new CapturedFace[6];
     private TextView[][] mSquare = new TextView[MainActivity.SIZE][MainActivity.SIZE];
     private int mCurrentCapturingFaceId = 0;
 
     private static final int REQUEST_ID = 1;
-    private boolean mCubeReady = false;
     private String mState;
+    private Handler mHandler;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
+        mHandler = new Handler();
         mRootView = (RelativeLayout) inflater.inflate(R.layout.fragment_camera, null);
+
+        mButtonGrip = (Button) mRootView.findViewById(R.id.button_grip);
+        mButtonGrip.setOnClickListener(this);
 
         setupSquares();
         mButtonCapture = (Button) mRootView.findViewById(R.id.button_capture);
@@ -90,7 +100,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
         return mRootView;
     }
-
 
     /*
      * @return true if the permissions are granted
@@ -111,8 +120,28 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             initCubeWebView();
             return true;
         }
+
         mFaceCapturer = new FaceCapturer(this);
         mFaceCapturer.start();
+
+        SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
+        List<Request> requests = new ArrayList<>();
+
+        Collections.addAll(requests, mapper.rotateSide(0, 0, 0));
+        Collections.addAll(requests, mapper.rotateSide(1, 0, 0));
+        Collections.addAll(requests, mapper.rotateSide(2, 0, 0));
+        Collections.addAll(requests, mapper.rotateSide(3, 0, 0));
+        Collections.addAll(requests, mapper.gripSide(0, false, 0));
+        Collections.addAll(requests, mapper.gripSide(1, false, 0));
+        Collections.addAll(requests, mapper.gripSide(2, false, 0));
+        Collections.addAll(requests, mapper.gripSide(3, false, 0));
+
+        try {
+            ((MainActivity)getActivity()).getRobotScheduler().put(requests, null);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         return true;
     }
 
@@ -158,7 +187,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         if (mFaceCapturer != null) mFaceCapturer.start();
     }
 
-
     @Override
     public void onStop() {
         super.onStop();
@@ -171,51 +199,113 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         if (mCube != null) return;
 
         mCube = new CubeWebView(this.getActivity(), mState);
-        mCube.addJavascriptInterface(this, "MoveCallback");
         mCube.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        mCube.setWebViewClient(new WebViewClient() {
+        mCube.callWhenReady(new Runnable() {
             @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                onCubeWebViewReady();
+            public void run() {
+                mButtonCapture.setVisibility(View.GONE);
+                mCube.lookAtFace("U");
+                mCube.cubejsSolve(mState, CameraFragment.this);
             }
         });
 
         mRootView.addView(mCube);
     }
 
-    /**
-     * Called when a move is about to be executed on the cube
-     *
-     * @param move
-     */
-    @JavascriptInterface
-    public void onMoveStart(final String move) {
-        exec(move);
-    }
-
-    private void onCubeWebViewReady() {
-        mCubeReady = true;
-        mButtonCapture.setVisibility(View.GONE);
-        mButtonSolve.setVisibility(View.VISIBLE);
-    }
-
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.button_grip:
+                if (mGrippedAxis >= 2) break;
+
+                SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
+                List<Request> requests = new ArrayList<>();
+
+                Collections.addAll(requests, mapper.gripSide(mGrippedAxis, true, 0));
+                Collections.addAll(requests, mapper.gripSide(mGrippedAxis+2, true, 0));
+
+                mGrippedAxis++;
+
+                try {
+                    ((MainActivity)getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
+                        @Override
+                        public void requestComplete(int i, Request req) {
+                        }
+
+                        @Override
+                        public void chunkFailed(int i, Request req, Response res) {
+                        }
+
+                        @Override
+                        public void chunkComplete() {
+                            if (mGrippedAxis >= 2) mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    startScan();
+                                }
+                            });
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                break;
+
             case R.id.button_capture:
-                if (mFaceCapturer != null) mFaceCapturer.capture(mCurrentCapturingFaceId, this);
+                startScan();
                 break;
 
             case R.id.button_solve:
-                String algorithm = (String) mCube.javaScript("solve", mState);
-                Log.d(TAG, "Algorithm:" + algorithm);
-
-                //mCube.cube("algorithm", algorithm);
-
-                exec(algorithm);
-
                 break;
+        }
+    }
+
+    public static final String SCANNED_FACES = "FLDBRU";
+    public static final int[] SCANNED_ROTATION = new int[] {0,0,3,1,1,0};
+
+    public void startScan() {
+        mButtonGrip.setVisibility(View.GONE);
+
+        SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
+        List<Request> requests = new ArrayList<>();
+
+        // Ungrip Y
+        Collections.addAll(requests, mapper.gripAxis(true, false));
+        // Move X and Y to H (FIXME: parallellize)
+        Collections.addAll(requests, mapper.rotateAxis(true, 1));
+        Collections.addAll(requests, mapper.rotateAxis(false, 1));
+
+        executeAndScan(requests);
+    }
+
+    public void executeAndScan(List<Request> requests) {
+        try {
+            ((MainActivity)getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
+                @Override
+                public void requestComplete(int i, Request req) {
+                }
+
+                @Override
+                public void chunkFailed(int i, Request req, Response res) {
+                    Toast.makeText(getActivity(), "Scan failed", Toast.LENGTH_LONG).show();
+                }
+
+                @Override
+                public void chunkComplete() {
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mCurrentCapturingFaceId < 6)
+                                mFaceCapturer.capture(mCurrentCapturingFaceId, CameraFragment.this);
+                            else
+                                facesScanned();
+                        }
+                    });
+                }
+            });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -226,56 +316,49 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             showColors(face);
         }
 
-        if (mCurrentCapturingFaceId == 6) {
-            List<Sticker> stickers = new ArrayList<>();
+        SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
+        List<Request> requests = new ArrayList<>();
 
-            int p = 0;
-            for (int i = 0; i < 6; i++) {
-                CapturedFace f = mCapturedFaces[i];
-                for (int j = 0; j < f.size; j++) {
-                    for (int k = 0; k < f.size; k++) {
-                        stickers.add(new Sticker(p++, f.getColor(j, k)));
-                    }
-                }
-            }
-
-            mState = StickerSorter.getState(stickers);
-            initCubeWebView();
-
-            return;
+        boolean ungrippedAxis = mCurrentCapturingFaceId % 2 != 0;
+        if (mCurrentCapturingFaceId < 6) {
+            // Move non-gripped axis to V, and grip
+            Collections.addAll(requests, mapper.rotateAxis(ungrippedAxis, 0));
+            Collections.addAll(requests, mapper.gripAxis(ungrippedAxis, true));
+            // Ungrip the other axis
+            Collections.addAll(requests, mapper.gripAxis(!ungrippedAxis, false));
+            // Move the (now gripped) axis to H
+            Collections.addAll(requests, mapper.rotateAxis(ungrippedAxis, 1));
+        } else {
+            // Move non-gripped axis to V, and grip
+            Collections.addAll(requests, mapper.rotateAxis(ungrippedAxis, 0));
+            Collections.addAll(requests, mapper.gripAxis(ungrippedAxis, true));
+            // Ungrip the other axis, move to V, grip
+            Collections.addAll(requests, mapper.gripAxis(!ungrippedAxis, false));
+            Collections.addAll(requests, mapper.rotateAxis(!ungrippedAxis, 0));
+            Collections.addAll(requests, mapper.gripAxis(!ungrippedAxis, true));
         }
 
+        executeAndScan(requests);
     }
 
-    private static List<Integer> kNN(int[] colors, int index, int k) {
-        class Pair {
-            int index;
-            double dst;
-        }
-        List<Pair> dsts = new ArrayList<>();
-        for (int j = 0; j < colors.length; j++) {
-            if (index == j) continue;
-            Pair p = new Pair();
-            p.dst = ColorUtil.colorDistance(colors[j], colors[index]);
-            p.index = j;
-            dsts.add(p);
-        }
+    private void facesScanned() {
+        List<Sticker> stickers = new ArrayList<>();
 
-        Collections.sort(dsts, new Comparator<Pair>() {
-            @Override
-            public int compare(Pair lhs, Pair rhs) {
-                return (int) Math.signum(lhs.dst - rhs.dst);
+        for (int i = 0; i < 6; i++) {
+            int currentFace = SCANNED_FACES.indexOf("ULFRBD".charAt(i));
+            double[][][] matrix = mCapturedFaces[currentFace].m;
+            for (int r = 0; r < SCANNED_ROTATION[currentFace]; r++)
+                MatrixUtils.rotate(matrix, 3);
+            for (int y = 0; y < 3; y++) {
+                for (int x = 0; x < 3; x++) {
+                    double[] c = matrix[y][x];
+                    stickers.add(new Sticker(stickers.size(), Color.rgb((int) c[0], (int) c[1], (int) c[2])));
+                }
             }
-        });
-        //double fmd = dsts.get(7).dst;
-        //double next = dsts.get(8).dst;
-        //Log.d(TAG, "group max: "+fmd +", next: "+next + ", diff="+(next-fmd));
+        }
 
-        List<Integer> idx = new ArrayList<>();
-        for (int i = 0; i < 8; i++)
-            idx.add(dsts.get(i).index);
-        Collections.sort(idx);
-        return idx;
+        mState = StickerSorter.getState(stickers);
+        initCubeWebView();
     }
 
     private void showColors(CapturedFace f) {
@@ -334,32 +417,44 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         for (int i = 0; i < d.length; i++) d[i] = Math.pow(d[i] / 255.0, COLOR_ERROR_GAMMA);
     }
 
+    @Override
+    public void onSolved(String algorithm) {
+        List<AlgorithmMove> moves = AlgorithmMove.parse(algorithm);
+        Log.d(TAG, "Solve (" + moves.size() + "): " + algorithm);
 
-    public List<Request> map(String alg) {
-        List<AlgorithmMove> moves = AlgorithmMove.parse(alg);
-        Log.d(TAG, "Solve (" + moves.size() + "): " + alg);
+        final List<SimpleRobotMapper.RequestTag> tags = new ArrayList<>();
+        final List<Request> requests = ((MainActivity)getActivity()).getMapper().map(moves, true, tags);
+        final Handler handler = new Handler();
 
-        List<AlgorithmMove> preMappedMoves = new ArrayList<>();
-        for (AlgorithmMove move : moves)
-            Collections.addAll(preMappedMoves, SimpleRobotMapper.preMap(move));
-        Log.d(TAG, "Pre-mapped moves (" + preMappedMoves.size() + "): " + AlgorithmMove.format(preMappedMoves));
-
-        SimpleRobotMapper mapper = new SimpleRobotMapper();
-        List<Request> requests = mapper.map(moves);
-        int time = 0, delays = 0;
-        for (Request request : requests) {
-            if (request instanceof DelayRequest) {
-                time += ((DelayRequest) request).getDelay();
-                delays++;
+        boolean result = ((MainActivity)getActivity()).getRobotScheduler().offer(requests, new RobotScheduler.ChunkListener() {
+            @Override
+            public void requestComplete(final int i, Request req) {
+                if (i+1 >= requests.size()) return;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Request next = requests.get(i+1);
+                        for (SimpleRobotMapper.RequestTag tag : tags) {
+                            if (tag.requests[0] == next) {
+                                mCube.setAnimationDuration(tag.time);
+                                mCube.executeAlgorithm(AlgorithmMove.format(tag.move));
+                                break;
+                            }
+                        }
+                    }
+                });
             }
-        }
-        time /= 1000;
-        Log.d(TAG, "Translated into " + requests.size() + " backend requests.\nTheoretical execution time is " + (time / 60) + ":" + (time % 60) + " across " + delays + " delays.");
-        return requests;
-    }
 
-    private void exec(String algorithm) {
-        ((MainActivity) getActivity()).getRobotScheduler().offer(map(algorithm), null);
+            @Override
+            public void chunkFailed(int i, Request req, Response res) {
+                Toast.makeText(getActivity(), "Solve failed", Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void chunkComplete() {
+                Toast.makeText(getActivity(), "Cube solved", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
 }
