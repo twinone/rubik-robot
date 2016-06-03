@@ -22,6 +22,7 @@ import java.util.Set;
  * all methods should be called from the UI thread.
  */
 public class CubeWebView extends JSWebView {
+    public static final String SOLVED = "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD";
 
     protected Handler mHandler = new Handler();
 
@@ -39,9 +40,10 @@ public class CubeWebView extends JSWebView {
         getSettings().setJavaScriptEnabled(true);
         addJavascriptInterface(this, "Android");
 
-        if (state == null) state = "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD";
-        loadUrl("file:///android_asset/web/index.html?state=" + state);
+        if (state == null) state = SOLVED;
+        loadUrl("file:///android_asset/index.html?state=" + state);
         this.mState = state;
+        getSettings().setAllowFileAccessFromFileURLs(true);
     }
 
     // Move end listeners
@@ -60,7 +62,7 @@ public class CubeWebView extends JSWebView {
     }
 
     @JavascriptInterface
-    private void moveEnd(final String move, final String state) {
+    public void moveEnd(final String move, final String state) {
         // FIXME: is this necessary? isn't this run in the UI thread already?
         mHandler.post(new Runnable() {
             @Override
@@ -87,7 +89,7 @@ public class CubeWebView extends JSWebView {
     }
 
     @JavascriptInterface
-    private void ready() {
+    public void ready() {
         // FIXME: is this necessary? isn't this run in the UI thread already?
         mHandler.post(new Runnable() {
             @Override
@@ -133,7 +135,7 @@ public class CubeWebView extends JSWebView {
     }
 
     @JavascriptInterface
-    private void solved(final String state, final String algorithm) {
+    public void solved(final String state, final String algorithm) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -141,6 +143,20 @@ public class CubeWebView extends JSWebView {
                     callback.onSolved(algorithm);
             }
         });
+    }
+
+    // UI
+
+    public void lookAtFace(String face) {
+        loadUrl("javascript:" + constructFunction("cube.lookAtFace", face));
+    }
+
+    public void setAnimationDuration(int duration) {
+        loadUrl("javascript:cube.setAnimationDuration("+duration+")");
+    }
+
+    public void executeAlgorithm(String algorithm) {
+        loadUrl("javascript:cube.algorithm(\"" + algorithm + "\")");
     }
 
 }

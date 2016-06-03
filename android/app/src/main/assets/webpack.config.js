@@ -8,10 +8,11 @@ var config = {
     output: {
         path: __dirname + "/build",
         filename: "bundle.js",
-        publicPath: "/build/"
+        publicPath: "/android_asset/build/"
     },
     module: {
         loaders: [
+            { test: /main.js$/, loader: 'expose?cube' },
             { test: /assets\/\.css$/, loader: "style!css" },
         ]
     },
