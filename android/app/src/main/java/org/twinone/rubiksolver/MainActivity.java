@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import org.twinone.rubiksolver.robot.RobotScheduler;
+import org.twinone.rubiksolver.robot.SlightlyMoreAdvancedMapper;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int SIZE = 3;
     private BluetoothAdapter mBluetoothAdapter;
     private RobotScheduler mRobotScheduler;
+    private SlightlyMoreAdvancedMapper mMapper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
             mRobotScheduler = new RobotScheduler(socket.getInputStream(), socket.getOutputStream(), 10);
             Toast.makeText(this, "Connected to arduino", Toast.LENGTH_SHORT).show();
 
+            mMapper = new SlightlyMoreAdvancedMapper();
+
         } catch (IOException e) {
             Log.d("Main", "Exception connecting to bluetooth: ", e);
         }
@@ -68,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
     public RobotScheduler getRobotScheduler() {
         return mRobotScheduler;
     }
-
+    public SlightlyMoreAdvancedMapper getMapper() {
+        return mMapper;
+    }
 
 }
