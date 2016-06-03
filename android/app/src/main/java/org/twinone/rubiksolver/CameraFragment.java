@@ -26,6 +26,7 @@ import org.twinone.rubiksolver.robot.AlgorithmMove;
 import org.twinone.rubiksolver.robot.RobotScheduler;
 import org.twinone.rubiksolver.robot.SimpleRobotMapper;
 import org.twinone.rubiksolver.robot.SlightlyMoreAdvancedMapper;
+import org.twinone.rubiksolver.robot.comm.DetachRequest;
 import org.twinone.rubiksolver.robot.comm.Request;
 import org.twinone.rubiksolver.robot.comm.Response;
 import org.twinone.rubiksolver.util.MatrixUtils;
@@ -282,7 +283,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     public void executeAndScan(List<Request> requests) {
         try {
             ((MainActivity) getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkAdapter() {
-                
+
                 @Override
                 public void chunkFailed(int i, Request req, Response res) {
                     Toast.makeText(getActivity(), "Scan failed", Toast.LENGTH_LONG).show();
@@ -421,13 +422,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
         final List<SimpleRobotMapper.RequestTag> tags = new ArrayList<>();
         final List<Request> requests = ((MainActivity) getActivity()).getMapper().map(moves, true, tags);
-        final Handler handler = new Handler();
+        requests.addAll(DetachRequest.DETACH_ALL);
 
         boolean result = ((MainActivity) getActivity()).getRobotScheduler().offer(requests, new RobotScheduler.ChunkListener() {
             @Override
             public void requestComplete(final int i, Request req) {
                 if (i + 1 >= requests.size()) return;
-                handler.post(new Runnable() {
+                getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         Request next = requests.get(i + 1);
