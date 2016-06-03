@@ -14,9 +14,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -29,15 +26,12 @@ import org.twinone.rubiksolver.robot.AlgorithmMove;
 import org.twinone.rubiksolver.robot.RobotScheduler;
 import org.twinone.rubiksolver.robot.SimpleRobotMapper;
 import org.twinone.rubiksolver.robot.SlightlyMoreAdvancedMapper;
-import org.twinone.rubiksolver.robot.comm.DelayRequest;
 import org.twinone.rubiksolver.robot.comm.Request;
 import org.twinone.rubiksolver.robot.comm.Response;
-import org.twinone.rubiksolver.util.ColorUtil;
 import org.twinone.rubiksolver.util.MatrixUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -115,16 +109,24 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             return false;
         }
 
+        onPermissionsGranted();
+
+        return true;
+    }
+
+    private void onPermissionsGranted() {
+
         if (DBG) {
             mState = DBG_STATE;
             initCubeWebView();
-            return true;
+            return;
         }
 
         mFaceCapturer = new FaceCapturer(this);
         mFaceCapturer.start();
 
-        SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
+        SimpleRobotMapper mapper = getMapper();
+        if (mapper == null) return;
         List<Request> requests = new ArrayList<>();
 
         Collections.addAll(requests, mapper.rotateSide(0, 0, 0));
@@ -137,12 +139,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         Collections.addAll(requests, mapper.gripSide(3, false, 0));
 
         try {
-            ((MainActivity)getActivity()).getRobotScheduler().put(requests, null);
+            ((MainActivity) getActivity()).getRobotScheduler().put(requests, null);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        return true;
     }
 
     @Override
@@ -212,46 +212,18 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mRootView.addView(mCube);
     }
 
+    private SimpleRobotMapper getMapper() {
+        SlightlyMoreAdvancedMapper mapper = ((MainActivity) getActivity()).getMapper();
+        if (mapper == null) return null;
+        return mapper.mapper;
+    }
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.button_grip:
-                if (mGrippedAxis >= 2) break;
-
-                SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
-                List<Request> requests = new ArrayList<>();
-
-                Collections.addAll(requests, mapper.gripSide(mGrippedAxis, true, 0));
-                Collections.addAll(requests, mapper.gripSide(mGrippedAxis+2, true, 0));
-
-                mGrippedAxis++;
-
-                try {
-                    ((MainActivity)getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
-                        @Override
-                        public void requestComplete(int i, Request req) {
-                        }
-
-                        @Override
-                        public void chunkFailed(int i, Request req, Response res) {
-                        }
-
-                        @Override
-                        public void chunkComplete() {
-                            if (mGrippedAxis >= 2) mHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    startScan();
-                                }
-                            });
-                        }
-                    });
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
+                startGrip();
                 break;
-
             case R.id.button_capture:
                 startScan();
                 break;
@@ -261,13 +233,49 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         }
     }
 
+    private void startGrip() {
+        if (mGrippedAxis >= 2) return;
+
+        SimpleRobotMapper mapper = getMapper();
+        List<Request> requests = new ArrayList<>();
+
+        Collections.addAll(requests, mapper.gripSide(mGrippedAxis, true, 0));
+        Collections.addAll(requests, mapper.gripSide(mGrippedAxis + 2, true, 0));
+
+        mGrippedAxis++;
+
+        try {
+            ((MainActivity) getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
+                @Override
+                public void requestComplete(int i, Request req) {
+                }
+
+                @Override
+                public void chunkFailed(int i, Request req, Response res) {
+                }
+
+                @Override
+                public void chunkComplete() {
+                    if (mGrippedAxis >= 2) mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            startScan();
+                        }
+                    });
+                }
+            });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static final String SCANNED_FACES = "FLDBRU";
-    public static final int[] SCANNED_ROTATION = new int[] {0,0,3,1,1,0};
+    public static final int[] SCANNED_ROTATION = new int[]{0, 0, 3, 1, 1, 0};
 
     public void startScan() {
         mButtonGrip.setVisibility(View.GONE);
 
-        SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
+        SimpleRobotMapper mapper = getMapper();
         List<Request> requests = new ArrayList<>();
 
         // Ungrip Y
@@ -281,7 +289,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     public void executeAndScan(List<Request> requests) {
         try {
-            ((MainActivity)getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
+            ((MainActivity) getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
                 @Override
                 public void requestComplete(int i, Request req) {
                 }
@@ -316,7 +324,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             showColors(face);
         }
 
-        SimpleRobotMapper mapper = ((MainActivity)getActivity()).getMapper().mapper;
+        SimpleRobotMapper mapper = getMapper();
         List<Request> requests = new ArrayList<>();
 
         boolean ungrippedAxis = mCurrentCapturingFaceId % 2 != 0;
@@ -423,17 +431,17 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         Log.d(TAG, "Solve (" + moves.size() + "): " + algorithm);
 
         final List<SimpleRobotMapper.RequestTag> tags = new ArrayList<>();
-        final List<Request> requests = ((MainActivity)getActivity()).getMapper().map(moves, true, tags);
+        final List<Request> requests = ((MainActivity) getActivity()).getMapper().map(moves, true, tags);
         final Handler handler = new Handler();
 
-        boolean result = ((MainActivity)getActivity()).getRobotScheduler().offer(requests, new RobotScheduler.ChunkListener() {
+        boolean result = ((MainActivity) getActivity()).getRobotScheduler().offer(requests, new RobotScheduler.ChunkListener() {
             @Override
             public void requestComplete(final int i, Request req) {
-                if (i+1 >= requests.size()) return;
+                if (i + 1 >= requests.size()) return;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Request next = requests.get(i+1);
+                        Request next = requests.get(i + 1);
                         for (SimpleRobotMapper.RequestTag tag : tags) {
                             if (tag.requests[0] == next) {
                                 mCube.setAnimationDuration(tag.time);
