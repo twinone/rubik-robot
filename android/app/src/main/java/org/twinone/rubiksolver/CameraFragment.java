@@ -245,15 +245,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mGrippedAxis++;
 
         try {
-            ((MainActivity) getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
-                @Override
-                public void requestComplete(int i, Request req) {
-                }
-
-                @Override
-                public void chunkFailed(int i, Request req, Response res) {
-                }
-
+            ((MainActivity) getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkAdapter() {
                 @Override
                 public void chunkComplete() {
                     if (mGrippedAxis >= 2) mHandler.post(new Runnable() {
@@ -289,11 +281,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     public void executeAndScan(List<Request> requests) {
         try {
-            ((MainActivity) getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkListener() {
-                @Override
-                public void requestComplete(int i, Request req) {
-                }
-
+            ((MainActivity) getActivity()).getRobotScheduler().put(requests, new RobotScheduler.ChunkAdapter() {
+                
                 @Override
                 public void chunkFailed(int i, Request req, Response res) {
                     Toast.makeText(getActivity(), "Scan failed", Toast.LENGTH_LONG).show();

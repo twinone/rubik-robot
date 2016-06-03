@@ -16,6 +16,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.twinone.rubiksolver.robot.comm.FailedResponseException;
 import org.twinone.rubiksolver.robot.comm.Packet;
 import org.twinone.rubiksolver.robot.comm.Request;
@@ -27,28 +28,46 @@ import org.twinone.rubiksolver.robot.comm.ResumeRequest;
  * as it completes, sending resumes as necessary, etc.
  */
 public class RobotScheduler implements AutoCloseable {
-    
+
     public interface ChunkListener {
         void requestComplete(int i, Request req);
+
         void chunkFailed(int i, Request req, Response res);
+
         void chunkComplete();
     }
-    
+
+    public static abstract class ChunkAdapter implements ChunkListener {
+
+        @Override
+        public void requestComplete(int i, Request req) {
+        }
+
+        @Override
+        public void chunkFailed(int i, Request req, Response res) {
+        }
+
+        @Override
+        public void chunkComplete() {
+        }
+    }
+
     protected static class ChunkEntry {
         Iterable<Request> requests;
         ChunkListener listener;
+
         public ChunkEntry(Iterable<Request> requests, ChunkListener listener) {
             this.requests = requests;
             this.listener = listener;
         }
     }
-    
+
     private final InputStream input;
     private final OutputStream output;
     private final Thread runner;
     private final int sendAhead;
     private SynchronousQueue<ChunkEntry> queue = new SynchronousQueue<>();
-    
+
     public RobotScheduler(InputStream input, OutputStream output, int sendAhead) {
         this.input = input;
         this.output = output;
@@ -61,11 +80,11 @@ public class RobotScheduler implements AutoCloseable {
         });
         runner.start();
     }
-    
+
     public RobotScheduler(InputStream input, OutputStream output) {
         this(input, output, 10);
     }
-    
+
     @Override
     public void close() throws IOException {
         try {
@@ -76,23 +95,23 @@ public class RobotScheduler implements AutoCloseable {
             Logger.getLogger(RobotScheduler.class.getName()).log(Level.SEVERE, null, ex); //FIXME
         }
     }
-    
+
     public void put(Iterable<Request> requests, ChunkListener listener) throws InterruptedException {
         if (requests == null) throw new IllegalArgumentException();
         queue.put(new ChunkEntry(requests, listener));
     }
-    
+
     public boolean offer(Iterable<Request> requests, ChunkListener listener) {
         if (requests == null) throw new IllegalArgumentException();
         return queue.offer(new ChunkEntry(requests, listener));
     }
-    
+
     public void put(Request request) throws InterruptedException {
         List<Request> requests = new ArrayList<>();
         requests.add(request);
         queue.put(new ChunkEntry(requests, null));
     }
-    
+
     private void schedulerThread() {
         try {
             ChunkEntry chunk;
@@ -106,18 +125,18 @@ public class RobotScheduler implements AutoCloseable {
             Logger.getLogger(RobotScheduler.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     protected void processChunk(ChunkEntry chunk) throws IOException, FailedResponseException {
         Queue<Request> buffer = new ArrayBlockingQueue<>(sendAhead);
         Iterator<Request> requests = chunk.requests.iterator();
-        
+
         // Send requests until we fill the buffer
         Request toSend = null;
         while (requests.hasNext() && buffer.offer(toSend = requests.next())) {
             Packet.write(output, toSend);
             toSend = null;
         }
-        
+
         // Read responses while sending rest of the requests
         int idx = 0;
         while (toSend != null || !buffer.isEmpty()) {
@@ -131,7 +150,7 @@ public class RobotScheduler implements AutoCloseable {
                 return;
             }
             if (chunk.listener != null) chunk.listener.requestComplete(idx++, toCheck);
-            
+
             // Enqueue request
             if (toSend != null) {
                 buffer.add(toSend);
@@ -140,8 +159,8 @@ public class RobotScheduler implements AutoCloseable {
                 if (requests.hasNext()) toSend = requests.next();
             }
         }
-        
+
         if (chunk.listener != null) chunk.listener.chunkComplete();
     }
-    
+
 }
