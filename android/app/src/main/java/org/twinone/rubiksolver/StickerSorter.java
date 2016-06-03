@@ -14,8 +14,19 @@ import java.util.List;
  */
 public class StickerSorter {
 
-
     public static String getState(List<Sticker> stickers) {
+        return getState(stickers, null);
+    }
+
+    /**
+     * Get the state of the cube and the average color of each face
+     * @param stickers The input stickers
+     * @param colorList The output colors will be added here in order (list will be cleared)
+     * @return
+     */
+    public static String getState(List<Sticker> stickers, List<Integer> colorList) {
+        if (colorList != null) colorList.clear();
+
         int ss = 9;
         List<List<Sticker>> groups = new ArrayList<>();
 
@@ -45,7 +56,7 @@ public class StickerSorter {
                 }
             }
 
-            Log.d("Sort", "Adding sticker face=" + candidate.position / 9 + ", pos=" + candidate.position % 9 + " to list #" + groups.indexOf(candidateList));
+            //Log.d("Sort", "Adding sticker face=" + candidate.position / 9 + ", pos=" + candidate.position % 9 + " to list #" + groups.indexOf(candidateList));
             candidateList.add(candidate);
             stickers.remove(candidate);
         }
@@ -56,6 +67,7 @@ public class StickerSorter {
             for (Sticker s : l) {
                 state[s.position] = "ULFRBD".charAt(i);
             }
+            if (colorList != null) colorList.add(average(l));
             i++;
         }
         return new String(state);
@@ -74,6 +86,9 @@ public class StickerSorter {
         return res;
     }
 
+    /**
+     * @return the average color of this list of stickers
+     */
     public static int average(List<Sticker> l) {
         int s = l.size();
         double r = 0;

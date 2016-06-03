@@ -67,6 +67,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     private static final int REQUEST_ID = 1;
     private String mState;
+    private List<Integer> mFaceColors = new ArrayList<>();
     private Handler mHandler;
 
     @Nullable
@@ -355,7 +356,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             }
         }
 
-        mState = StickerSorter.getState(stickers);
+        mState = StickerSorter.getState(stickers, mFaceColors);
         initCubeWebView();
     }
 
