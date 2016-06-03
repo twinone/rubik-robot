@@ -448,12 +448,19 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
             @Override
             public void chunkFailed(int i, Request req, Response res) {
-                Toast.makeText(getActivity(), "Solve failed", Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void chunkComplete() {
-                Toast.makeText(getActivity(), "Cube solved", Toast.LENGTH_LONG).show();
+                getActivity().runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+
+                                Toast.makeText(getActivity(), "Cube solved", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                );
             }
         });
     }
