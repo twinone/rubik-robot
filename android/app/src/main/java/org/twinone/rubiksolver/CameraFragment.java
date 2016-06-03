@@ -206,7 +206,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             @Override
             public void run() {
                 mButtonCapture.setVisibility(View.GONE);
-                mCube.lookAtFace("U");
+                // TODO
+                // mCube.lookAtFace("U");
+                mCube.setColors(mFaceColors);
                 mCube.cubejsSolve(mState, CameraFragment.this);
             }
         });

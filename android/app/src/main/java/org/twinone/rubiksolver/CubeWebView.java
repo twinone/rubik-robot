@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 
@@ -50,13 +51,16 @@ public class CubeWebView extends JSWebView {
 
     public interface MoveEndListener {
         void onMoveEnd(String move);
-    };
+    }
+
+    ;
 
     protected Set<MoveEndListener> mMoveEndListeners = new HashSet<>();
 
     public void addMoveEndListener(MoveEndListener listener) {
         mMoveEndListeners.add(listener);
     }
+
     public void removeMoveEndListener(MoveEndListener listener) {
         mMoveEndListeners.remove(listener);
     }
@@ -106,7 +110,8 @@ public class CubeWebView extends JSWebView {
 
     /**
      * Sets the cube state. The change is scheduled, not applied immediately.
-     * @param state       New state
+     *
+     * @param state New state
      */
     public void setState(String state) {
         loadUrl("javascript:" + JSWebView.constructFunction("cube.setState", state));
@@ -152,11 +157,24 @@ public class CubeWebView extends JSWebView {
     }
 
     public void setAnimationDuration(int duration) {
-        loadUrl("javascript:cube.setAnimationDuration("+duration+")");
+        loadUrl("javascript:cube.setAnimationDuration(" + duration + ")");
     }
 
     public void executeAlgorithm(String algorithm) {
         loadUrl("javascript:cube.algorithm(\"" + algorithm + "\")");
+    }
+
+    public void setColors(List<Integer> colors) {
+        StringBuilder sb = new StringBuilder("[");
+        boolean sep = false;
+        for (int c : colors) {
+            if (sep) sb.append(",");
+            sb.append(c);
+            sep = true;
+        }
+        sb.append("]");
+
+        loadUrl("javascript:cube.setStickerColors(" + sb.toString() + ")");
     }
 
 }
