@@ -28,7 +28,7 @@ import org.twinone.rubiksolver.robot.comm.ResumeRequest;
  */
 public class RobotScheduler implements AutoCloseable {
     
-    public static interface ChunkListener {
+    public interface ChunkListener {
         void requestComplete(int i, Request req);
         void chunkFailed(int i, Request req, Response res);
         void chunkComplete();
