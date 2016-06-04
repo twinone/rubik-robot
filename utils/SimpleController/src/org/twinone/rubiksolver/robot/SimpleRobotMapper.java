@@ -4,7 +4,6 @@ import org.twinone.rubiksolver.robot.comm.DelayRequest;
 import org.twinone.rubiksolver.robot.comm.Request;
 import org.twinone.rubiksolver.robot.comm.WriteRequest;
 import org.twinone.rubiksolver.robot.comm.DetachRequest;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,14 +12,6 @@ import java.util.List;
  * Maps algorithm moves to backend requests.
  */
 public class SimpleRobotMapper {
-
-    public static final int[] CALIBRATION_OFFSETS = {
-            138, 43,
-            146, 119,
-            92, 133,
-            150, 24,
-    };
-
     public static class RequestTag {
         // Equivalent move executed in the cube
         public AlgorithmMove move;
@@ -29,7 +20,7 @@ public class SimpleRobotMapper {
         // Time it takes for `move` to execute
         public int time;
     }
-
+    
     private static Request[] tag(List<RequestTag> tags, Request[] reqs, AlgorithmMove move) {
         if (tags != null) {
             int time = 0;
@@ -44,38 +35,46 @@ public class SimpleRobotMapper {
         return reqs;
     }
 
+    //FIXME: accessors for this
+    
+    protected int[] calibrationOffset = {
+        138,  43,
+        146, 119,
+         92, 133,
+        150,  24,
+    };
+
     // Gripper-specific
     protected int gripAngle = +30;
     protected int ungripAngle = -40;
 
     // Rotation-specific
     protected int turnAngle = 103;
-    protected int[] overshootAngle = {10, 5, 5, 8};
+    protected int[] overshootAngle = { 10, 5, 5, 8 };
     protected int recoverAngle = -10;
 
 
     public WriteRequest gripSide(int side, boolean grip, int offset) {
         int motor = Request.getMotor(side, Request.MOTOR_GRIP);
-        int position = CALIBRATION_OFFSETS[motor] + (grip ? gripAngle : ungripAngle);
+        int position = calibrationOffset[motor] + (grip ? gripAngle : ungripAngle);
         return moveMotor(motor, position + offset);
     }
-
+    
     public WriteRequest rotateSide(int side, int pos, int offset) {
         int motor = Request.getMotor(side, Request.MOTOR_ROTATION);
-        int position = CALIBRATION_OFFSETS[motor];
+        int position = calibrationOffset[motor];
         boolean reverse = (side == 1) || (side == 2);
         offset *= (pos != 0) ? +1 : -1;
         if (pos != 0) offset += turnAngle;
         return moveMotor(motor, position + offset * (reverse ? -1 : +1));
     }
-
+    
     public static WriteRequest moveMotor(int motor, int pos) {
         return new WriteRequest(motor, Math.max(Math.min(pos, 180), 0));
     }
-
+    
     /**
      * Map an algorithm move to other algorithm moves that can be mapped and are equivalent.
-     *
      * @param move move to premap
      * @return suitable algorithm moves
      */
@@ -92,9 +91,9 @@ public class SimpleRobotMapper {
             result.get(1).reverse = move.reverse;
             return result.toArray(new AlgorithmMove[0]);
         }
-
+        
         if ("RBLFXZ".indexOf(move.face) != -1)
-            return new AlgorithmMove[]{move};
+            return new AlgorithmMove[] {move};
 
         throw new IllegalArgumentException("Unknown move");
     }
@@ -169,12 +168,12 @@ public class SimpleRobotMapper {
     /**
      * Generate a chunk of backend requests to grip (or ungrip) an axis.
      *
-     * @param axis    Axis to grip (false = horizontal, true = vertical)
+     * @param axis Axis to grip (false = horizontal, true = vertical)
      * @param gripped true to grip axis, false to ungrip
      * @return Chunk of backend requests
      */
     public Request[] gripAxis(boolean axis, boolean gripped) {
-        return new Request[]{
+        return new Request[] {
                 gripSide(axis ? 1 : 0, gripped, 0),
                 gripSide(axis ? 3 : 2, gripped, 0),
                 new DelayRequest(calculateDelay(gripped, !gripped, false, false, false)),
@@ -184,12 +183,12 @@ public class SimpleRobotMapper {
     /**
      * Generate a chunk of backend requests to grip (or ungrip) an axis.
      *
-     * @param axis     Axis to grip (false = horizontal, true = vertical)
+     * @param axis Axis to grip (false = horizontal, true = vertical)
      * @param position Position to rotate axis to
      * @return Chunk of backend requests
      */
     public Request[] rotateAxis(boolean axis, int position) {
-        return new Request[]{
+        return new Request[] {
                 rotateSide(axis ? 1 : 0, position, 0),
                 rotateSide(axis ? 3 : 2, position, 0),
                 new DelayRequest(calculateDelay(false, false, true, false, false)),
@@ -200,13 +199,13 @@ public class SimpleRobotMapper {
      * Map a single move directly to backend requests. This method assumes (and leaves) the
      * cube in such an orientation that sides 0, 1, 2 and 3 have the faces R, B, L, F
      * respectively, all sides are gripped and at position 0 (vertical).
-     * <p/>
+     *
      * **Important:** This method will fail if the supplied move is not one of RBLFXZ or
      * their reverses. To map arbitrary moves, use {@link SimpleRobotMapper#map(Iterable)}
      *
      * @param requests Resulting requests will be appended to this list.
-     * @param tags     Optional list where request tags will be put
-     * @param move     Move to map
+     * @param tags Optional list where request tags will be put
+     * @param move Move to map
      */
     public void map(List<Request> requests, List<RequestTag> tags, AlgorithmMove move) {
         List<Request[]> chunks = new ArrayList<>();
@@ -234,26 +233,26 @@ public class SimpleRobotMapper {
         int side = "RBLF".indexOf(move.face);
         if (side != -1) {
             if (side == 1 || side == 2) forward = !forward;
-
+            
             // First chunk: rotate the face, overshooting, delay, then recover
-            chunks.add(tag(tags, new Request[]{
+            chunks.add(tag(tags, new Request[] {
                     rotateSide(side, forward ? 1 : 0, overshootAngle[side]),
                     new DelayRequest(calculateDelay(false, false, false, true, false)),
                     rotateSide(side, forward ? 1 : 0, recoverAngle),
                     new DelayRequest(calculateDelay(false, false, false, false, true)),
             }, move));
             // Second chunk: ungrab the side to reset
-            chunks.add(new Request[]{
+            chunks.add(new Request[] {
                     gripSide(side, forward ? false : true, 0),
                     new DelayRequest(calculateDelay(!forward, forward, false, false, false)),
             });
             // Third chunk: reset gripper back into position
-            chunks.add(new Request[]{
+            chunks.add(new Request[] {
                     rotateSide(side, forward ? 0 : 1, 0),
                     new DelayRequest(calculateDelay(false, false, true, false, false)),
             });
             // Fourth chunk: grab face again
-            chunks.add(new Request[]{
+            chunks.add(new Request[] {
                     gripSide(side, forward ? true : false, 0),
                     new DelayRequest(calculateDelay(forward, !forward, false, false, false)),
             });
@@ -266,13 +265,13 @@ public class SimpleRobotMapper {
 
     /**
      * Map an algorithm to a sequence of backend requests.
-     * <p/>
+     *
      * This method assumes (and leaves) the cube in such an orientation that sides
      * 0, 1, 2 and 3 have the faces R, B, L, F respectively, all sides are gripped
      * and at position 0 (vertical).
      *
      * @param algorithm Algorithm to translate
-     * @param tags      Optional list where request tags will be put
+     * @param tags Optional list where request tags will be put
      * @return List of backend requests
      */
     public List<Request> map(Iterable<AlgorithmMove> algorithm, List<RequestTag> tags) {
