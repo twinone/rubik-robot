@@ -26,7 +26,11 @@ public class JSWebView extends WebView {
 
     }
 
-    public synchronized Object javaScript(String methodName, Object... params) {
+    public void js(String function, Object... params) {
+        evaluateJavascript(constructFunction(function, params), null);
+    }
+
+    public synchronized Object jsSync(String function, Object... params) {
         final int id;
         synchronized (mIdLock) {
             id = mId++;
@@ -34,7 +38,7 @@ public class JSWebView extends WebView {
 
         final String call = "javascript:" +
                 "try {" +
-                "var res = " + constructFunction(methodName, params) + ";" +
+                "var res = " + constructFunction(function, params) + ";" +
                 "res = JSON.stringify(res);" +
                 "AndroidJavascriptCallback.onResult(" + id + ", res);" +
                 "} catch (e) {" +

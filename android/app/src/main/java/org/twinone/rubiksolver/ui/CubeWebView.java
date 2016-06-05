@@ -111,7 +111,7 @@ public class CubeWebView extends JSWebView {
      * @param state New state
      */
     public void setState(String state) {
-        loadUrl("javascript:" + JSWebView.constructFunction("cube.setState", state));
+        cubeJs("setState", state);
     }
 
     String mState;
@@ -131,7 +131,7 @@ public class CubeWebView extends JSWebView {
     public void cubejsSolve(String state, SolveCallback callback) {
         if (!mSolveCallbacks.containsKey(state)) {
             mSolveCallbacks.put(state, new ArrayList<SolveCallback>());
-            loadUrl("javascript:" + constructFunction("cube.cubejsSolve", state));
+            cubeJs("cubejsSolve", state);
         }
         mSolveCallbacks.get(state).add(callback);
     }
@@ -150,15 +150,15 @@ public class CubeWebView extends JSWebView {
     // UI
 
     public void lookAtFace(String face) {
-        loadUrl("javascript:" + constructFunction("cube.lookAtFace", face));
+        cubeJs("lookAtFace", face);
     }
 
     public void setAnimationDuration(int duration) {
-        loadUrl("javascript:cube.setAnimationDuration(" + duration + ")");
+        cubeJs("setAnimationDuration", duration);
     }
 
     public void executeAlgorithm(String algorithm) {
-        loadUrl("javascript:cube.algorithm(\"" + algorithm + "\")");
+        cubeJs("algorithm", algorithm);
     }
 
     public void setColors(List<Integer> colors) {
@@ -172,6 +172,10 @@ public class CubeWebView extends JSWebView {
         sb.append("]");
 
         loadUrl("javascript:cube.setStickerColors(" + sb.toString() + ")");
+    }
+
+    private void cubeJs(String function, Object... params) {
+        js("cube." + function, params);
     }
 
 }
