@@ -51,24 +51,26 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     //TODO: make lookAtFace and algorithm/setAnimationDuration work
 
     private static final boolean DBG = false;
-    private static final String DBG_STATE = CubeWebView.SOLVED;
-
+    private static final String DBG_STATE = CubeWebView.STATE_SOLVED;
     private static final String TAG = "CameraFragment";
     private static final double COLOR_ERROR_GAMMA = 2.2;
+    private static final int REQUEST_ID = 1;
 
+    // Views
+    private RelativeLayout mRootView;
+    private TextView[][] mCapturedSquares = new TextView[MainActivity.SIZE][MainActivity.SIZE];
     private FaceCapturer mFaceCapturer;
     private Button mButtonGrip;
     private Button mButtonCapture;
     private Button mButtonSolve;
+    private Button mButtonFlash;
     private CubeWebView mCube;
 
-    private int mGrippedAxis = 0;
-    private RelativeLayout mRootView;
-    private CapturedFace[] mCapturedFaces = new CapturedFace[6];
-    private TextView[][] mSquare = new TextView[MainActivity.SIZE][MainActivity.SIZE];
-    private int mCurrentCapturingFaceId = 0;
 
-    private static final int REQUEST_ID = 1;
+    // Data
+    private int mGrippedAxis = 0;
+    private CapturedFace[] mCapturedFaces = new CapturedFace[6];
+    private int mCurrentCapturingFaceId = 0;
     private String mState;
     private List<Integer> mFaceColors = new ArrayList<>();
     private Handler mHandler;
@@ -170,7 +172,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 tv.setTextSize(10);
                 tv.setLayoutParams(lp);
                 l.addView(tv);
-                mSquare[i][j] = tv;
+                mCapturedSquares[i][j] = tv;
             }
             cpw.addView(l);
         }
@@ -370,7 +372,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             double[] p1 = f.m[0][i].clone();
             applyGamma(p1);
             for (int j = 0; j < f.size; j++) {
-                mSquare[i][j].setBackgroundColor(f.getColor(i, j));
+                mCapturedSquares[i][j].setBackgroundColor(f.getColor(i, j));
 
                 // Calculate distance between this and target point
                 double[] p2 = f.m[i][j].clone();
@@ -382,9 +384,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 int color = f.getColor(i, j);
                 float hsv[] = f.getHSV(i, j);
 
-                //mSquare[i][j].setText(String.format("%.4f%%", error * 100));
-                mSquare[i][j].setText("#" + colorToHex(color) + "\n" + "HSV:" + "\n" + hsv[0] + "\n" + hsv[1] + "\n" + hsv[2]);
-                mSquare[i][j].setTextColor(getContrastyColor(color));
+                //mCapturedSquares[i][j].setText(String.format("%.4f%%", error * 100));
+                mCapturedSquares[i][j].setText("#" + colorToHex(color) + "\n" + "HSV:" + "\n" + hsv[0] + "\n" + hsv[1] + "\n" + hsv[2]);
+                mCapturedSquares[i][j].setTextColor(getContrastyColor(color));
 //                Log.d(TAG, "Sticker " + i + " " + j);
 //                Log.d(TAG, "RGB: " + Color.red(color) + " " + Color.green(color) + " " + Color.blue(color));
 //                Log.d(TAG, "HSV: " + hsv[0] + " " + hsv[1] + " " + hsv[2]);
