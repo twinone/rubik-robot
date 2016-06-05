@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver;
+package org.twinone.rubiksolver.util;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -14,7 +14,12 @@ import android.view.Surface;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import org.twinone.rubiksolver.R;
 import org.twinone.rubiksolver.model.CapturedFace;
+import org.twinone.rubiksolver.ui.CameraFragment;
+import org.twinone.rubiksolver.ui.CameraPreview;
+import org.twinone.rubiksolver.ui.HighlightView;
+import org.twinone.rubiksolver.ui.MainActivity;
 
 /**
  * Created by twinone on 6/30/15.
@@ -23,7 +28,7 @@ public class FaceCapturer {
 
     private static final String TAG = "FaceCapturer";
 
-    private CameraFragment mFragment;
+    private final CameraFragment mFragment;
 
 
     private CameraPreview mCameraPreview;

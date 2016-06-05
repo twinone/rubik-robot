@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver;
+package org.twinone.rubiksolver.ui;
 
 import android.content.Context;
 import android.hardware.Camera;

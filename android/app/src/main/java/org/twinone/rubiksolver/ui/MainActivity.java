@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver;
+package org.twinone.rubiksolver.ui;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;

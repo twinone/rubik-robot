@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver;
+package org.twinone.rubiksolver.ui;
 
 import android.Manifest;
 import android.app.Fragment;
@@ -20,6 +20,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.twinone.rubiksolver.R;
+import org.twinone.rubiksolver.util.FaceCapturer;
+import org.twinone.rubiksolver.util.StickerSorter;
 import org.twinone.rubiksolver.model.CapturedFace;
 import org.twinone.rubiksolver.model.Sticker;
 import org.twinone.rubiksolver.robot.AlgorithmMove;

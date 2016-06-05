@@ -1,4 +1,4 @@
-package org.twinone.rubiksolver;
+package org.twinone.rubiksolver.util;
 
 import android.graphics.Color;
 import android.util.Log;
