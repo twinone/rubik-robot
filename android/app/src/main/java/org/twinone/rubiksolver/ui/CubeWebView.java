@@ -4,10 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
-import android.os.Message;
-import android.text.TextUtils;
 import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
 
 import org.twinone.rubiksolver.util.JSWebView;
 
@@ -23,7 +20,7 @@ import java.util.Set;
  * all methods should be called from the UI thread.
  */
 public class CubeWebView extends JSWebView {
-    public static final String SOLVED = "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD";
+    public static final String STATE_SOLVED = "UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD";
 
     protected Handler mHandler = new Handler();
 
@@ -41,7 +38,7 @@ public class CubeWebView extends JSWebView {
         getSettings().setJavaScriptEnabled(true);
         addJavascriptInterface(this, "Android");
 
-        if (state == null) state = SOLVED;
+        if (state == null) state = STATE_SOLVED;
         loadUrl("file:///android_asset/index.html?state=" + state);
         this.mState = state;
         getSettings().setAllowFileAccessFromFileURLs(true);

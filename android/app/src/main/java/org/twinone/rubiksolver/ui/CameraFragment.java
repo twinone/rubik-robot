@@ -61,7 +61,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     private TextView[][] mCapturedSquares = new TextView[MainActivity.SIZE][MainActivity.SIZE];
     private FaceCapturer mFaceCapturer;
     private Button mButtonGrip;
-    private Button mButtonCapture;
     private Button mButtonSolve;
     private Button mButtonFlash;
     private CubeWebView mCube;
@@ -69,11 +68,14 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     // Data
     private int mGrippedAxis = 0;
-    private CapturedFace[] mCapturedFaces = new CapturedFace[6];
+    private boolean mFlashEnabled = false;
     private int mCurrentCapturingFaceId = 0;
+
+    private Handler mHandler;
+
     private String mState;
     private List<Integer> mFaceColors = new ArrayList<>();
-    private Handler mHandler;
+    private CapturedFace[] mCapturedFaces = new CapturedFace[6];
 
     @Nullable
     @Override
@@ -85,9 +87,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mButtonGrip = (Button) mRootView.findViewById(R.id.button_grip);
         mButtonGrip.setOnClickListener(this);
 
+        mButtonFlash = (Button) mRootView.findViewById(R.id.button_flash);
+        mButtonFlash.setOnClickListener(this);
+
         setupSquares();
-        mButtonCapture = (Button) mRootView.findViewById(R.id.button_capture);
-        mButtonCapture.setOnClickListener(this);
 
         mButtonSolve = (Button) mRootView.findViewById(R.id.button_solve);
         mButtonSolve.setOnClickListener(this);
@@ -210,7 +213,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         mCube.callWhenReady(new Runnable() {
             @Override
             public void run() {
-                mButtonCapture.setVisibility(View.GONE);
                 // TODO
                 // mCube.lookAtFace("U");
                 mCube.setColors(mFaceColors);
@@ -233,10 +235,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             case R.id.button_grip:
                 startGrip();
                 break;
-            case R.id.button_capture:
-                startScan();
+            case R.id.button_flash:
+                mFaceCapturer.setFlash(!mFlashEnabled);
+                mFlashEnabled = !mFlashEnabled;
                 break;
-
             case R.id.button_solve:
                 break;
         }
@@ -305,7 +307,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                             if (mCurrentCapturingFaceId < 6)
                                 mFaceCapturer.capture(mCurrentCapturingFaceId, CameraFragment.this);
                             else
-                                facesScanned();
+                                onAllFacesScanned();
                         }
                     });
                 }
@@ -347,7 +349,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         executeAndScan(requests);
     }
 
-    private void facesScanned() {
+    private void onAllFacesScanned() {
+        mFaceCapturer.stop();
+
+
         List<Sticker> stickers = new ArrayList<>();
 
         for (int i = 0; i < 6; i++) {

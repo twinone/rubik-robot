@@ -1,6 +1,7 @@
 package org.twinone.rubiksolver.util;
 
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -22,8 +23,9 @@ import org.twinone.rubiksolver.ui.HighlightView;
 import org.twinone.rubiksolver.ui.MainActivity;
 
 /**
- * Created by twinone on 6/30/15.
+ * @author Luuk W. (Twinone).
  */
+@SuppressWarnings("deprecation")
 public class FaceCapturer {
 
     private static final String TAG = "FaceCapturer";
@@ -36,6 +38,7 @@ public class FaceCapturer {
     private int mCameraId;
     private int mCameraRotation;
     private HighlightView mHLView;
+    private boolean mFlash;
 
     public interface Callback {
         void onFaceCaptured(int id, CapturedFace f);
@@ -100,6 +103,10 @@ public class FaceCapturer {
 
     public void stop() {
         mCamera.release();
+        mCamera = null;
+
+        FrameLayout fl = (FrameLayout) mFragment.getView().findViewById(R.id.frame_layout);
+        fl.removeAllViews();
     }
 
     void setupCamera() {
@@ -129,22 +136,16 @@ public class FaceCapturer {
 
 
     public void capture(final int id, final Callback c) {
+        mCamera.takePicture(null, null, new Camera.PictureCallback() {
+            @Override
+            public void onPictureTaken(byte[] data, Camera camera) {
+                Bitmap bitmap = getTransformedBitmap(data);
+                CapturedFace capturedFace = getFaceFromBitmap(bitmap);
+                c.onFaceCaptured(id, capturedFace);
+                mCamera.startPreview();
+            }
+        });
 
-        //mCamera.autoFocus(new Camera.AutoFocusCallback() {
-          //  @Override
-           // public void onAutoFocus(boolean success, Camera camera) {
-                // Even if it's not focused, we should probably take the picture anyway
-                mCamera.takePicture(null, null, new Camera.PictureCallback() {
-                    @Override
-                    public void onPictureTaken(byte[] data, Camera camera) {
-                        Bitmap bitmap = getTransformedBitmap(data);
-                        CapturedFace capturedFace = getFaceFromBitmap(bitmap);
-                        c.onFaceCaptured(id, capturedFace);
-                        mCamera.startPreview();
-                    }
-                });
-            //}
-        //});
     }
 
     public Bitmap getTransformedBitmap(byte[] data) {
@@ -178,11 +179,6 @@ public class FaceCapturer {
         m.setPolyToPoly(src, 0, new float[]{0, 0, tw, 0, tw, th, 0, th}, 0, 4);
         canvas.drawBitmap(b, m, null);
 
-        // Show the image
-//        ImageView iv = new ImageView(mFragment.getActivity());
-//        iv.setImageBitmap(target);
-//        mFragment.getRootView().addView(iv);
-
         return target;
     }
 
@@ -203,13 +199,6 @@ public class FaceCapturer {
         }
 
         return s;
-    }
-
-    // Round f to n decimal places
-    double round(double d, int n) {
-        int t = 1;
-        for (int i = 0; i < n; i++) t *= 10;
-        return (double) Math.round(d * t) / t;
     }
 
     public static Bitmap rotateBitmap(Bitmap source, float angle) {
@@ -251,10 +240,6 @@ public class FaceCapturer {
         return result;
     }
 
-    int doubleArrayToColor(double[] array) {
-        return Color.rgb((int) array[0], (int) array[1], (int) array[2]);
-    }
-
     double[] average(Bitmap bm) {
         int w = bm.getWidth();
         int h = bm.getHeight();
@@ -281,9 +266,22 @@ public class FaceCapturer {
         return new double[]{r, g, b};
     }
 
-    int averageColor(Bitmap b) {
-        return doubleArrayToColor(average(b));
-    }
+    public void setFlash(boolean flash) {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)) {
+            // Flash not available.
+            return;
+        }
 
+        if (mCamera == null) throw new IllegalStateException("call start() first");
+
+        mFlash = flash;
+        Camera.Parameters params = mCamera.getParameters();
+        if (flash) {
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        } else {
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+        }
+        mCamera.setParameters(params);
+    }
 
 }
