@@ -27,7 +27,9 @@ public class JSWebView extends WebView {
     }
 
     public void js(String function, Object... params) {
-        evaluateJavascript(constructFunction(function, params), null);
+        String js = constructFunction(function, params);
+        Log.d("JSWebView", "Evaluating javascript: " + js);
+        evaluateJavascript(js, null);
     }
 
     public synchronized Object jsSync(String function, Object... params) {
@@ -78,10 +80,8 @@ public class JSWebView extends WebView {
         for (Object param : params) {
             sb.append(separator);
             separator = ",";
-            if (param instanceof String) sb.append("'");
-            //FIXME: use gson or escape it someway?
-            sb.append(param);
-            if (param instanceof String) sb.append("'");
+            if (param instanceof String) sb.append(new Gson().toJson(param));
+            else sb.append(param);
         }
         return sb.append(")").toString();
     }
