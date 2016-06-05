@@ -102,6 +102,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             }
         });
 
+
+        mCube = new CubeWebView(this.getActivity());
+        mCube.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mRootView.addView(mCube);
+        mCube.setVisibility(View.INVISIBLE);
+
         return mRootView;
     }
 
@@ -205,22 +211,22 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     }
 
     private void initCubeWebView() {
-        Log.d(TAG, "State: " + mState);
-        if (mCube != null) return;
-
-        mCube = new CubeWebView(this.getActivity(), mState);
-        mCube.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        mCube.callWhenReady(new Runnable() {
+        mCube.setVisibility(View.VISIBLE);
+        new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                // TODO
-                // mCube.lookAtFace("U");
-                mCube.setColors(mFaceColors);
-                mCube.cubejsSolve(mState, CameraFragment.this);
+                mCube.callWhenReady(new Runnable() {
+                    @Override
+                    public void run() {
+                        mCube.setColors(mFaceColors);
+                        mCube.setState(mState);
+                        mCube.cubejsSolve(mState, CameraFragment.this);
+                    }
+                });
             }
-        });
+        }, 1000);
 
-        mRootView.addView(mCube);
+
     }
 
     private SimpleRobotMapper getMapper() {

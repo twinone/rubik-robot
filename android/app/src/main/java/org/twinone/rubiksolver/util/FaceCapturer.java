@@ -38,7 +38,6 @@ public class FaceCapturer {
     private int mCameraId;
     private int mCameraRotation;
     private HighlightView mHLView;
-    private boolean mFlash;
 
     public interface Callback {
         void onFaceCaptured(int id, CapturedFace f);
@@ -69,7 +68,7 @@ public class FaceCapturer {
         if (mHLView != null && mHLView.getParent() == mFragment.getRootView())
             mFragment.getRootView().removeView(mHLView);
         mHLView = new HighlightView(getActivity());
-        mFragment.getRootView().addView(mHLView);
+        fl.addView(mHLView);
 
 
     }
@@ -102,8 +101,10 @@ public class FaceCapturer {
 
 
     public void stop() {
-        mCamera.release();
-        mCamera = null;
+        if (mCamera != null) {
+            mCamera.release();
+            mCamera = null;
+        }
 
         FrameLayout fl = (FrameLayout) mFragment.getView().findViewById(R.id.frame_layout);
         fl.removeAllViews();
@@ -274,7 +275,6 @@ public class FaceCapturer {
 
         if (mCamera == null) throw new IllegalStateException("call start() first");
 
-        mFlash = flash;
         Camera.Parameters params = mCamera.getParameters();
         if (flash) {
             params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
