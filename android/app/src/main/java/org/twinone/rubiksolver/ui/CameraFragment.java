@@ -21,6 +21,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.twinone.rubiksolver.R;
+import org.twinone.rubiksolver.util.ColorEqualizer;
 import org.twinone.rubiksolver.util.FaceCapturer;
 import org.twinone.rubiksolver.util.StickerSorter;
 import org.twinone.rubiksolver.model.CapturedFace;
@@ -375,6 +376,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         }
 
         mState = StickerSorter.getState(stickers, mFaceColors);
+        ColorEqualizer.equalize(mFaceColors);
         initCubeWebView();
     }
 

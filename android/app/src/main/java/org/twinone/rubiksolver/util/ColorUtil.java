@@ -22,6 +22,10 @@ public class ColorUtil {
         // see http://stackoverflow.com/a/26998429
         double[] lab1 = ColorUtil.ColorToLAB(a);
         double[] lab2 = ColorUtil.ColorToLAB(b);
+        return colorDistanceCore(lab1, lab2);
+    }
+
+    public static double colorDistanceCore(double[] lab1, double[] lab2) {
         return Math.sqrt(Math.pow(lab2[0] - lab1[0], 2) + Math.pow(lab2[1] - lab1[1], 2) + Math.pow(lab2[2] - lab1[2], 2));
     }
 
