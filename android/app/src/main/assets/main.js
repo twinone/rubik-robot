@@ -114,6 +114,8 @@ solver.createCubejsSolver(function (s) {
 function cubejsSolve(state) {
   if (!cubejsSolver) return pendingSolves.push();
   cubejsSolver.solve(state, function (alg) {
+    console.log("State", state);
+    console.log("Algorithm: ", alg);
     Android.solved(state, alg);
   });
 }
