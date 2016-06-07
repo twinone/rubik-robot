@@ -445,16 +445,14 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
         final List<Request> requests = ((MainActivity) getActivity()).getMapper().map(moves, true, tags);
         requests.addAll(DetachRequest.DETACH_ALL);
 
-        boolean result = ((MainActivity) getActivity()).getRobotScheduler().offer(requests, new RobotScheduler.ChunkListener() {
+        boolean result = ((MainActivity) getActivity()).getRobotScheduler().offer(requests, new RobotScheduler.ChunkAdapter() {
             @Override
-            public void requestComplete(final int i, Request req) {
-                if (i + 1 >= requests.size()) return;
+            public void requestBegin(final int i, final Request req) {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Request next = requests.get(i + 1);
                         for (SimpleRobotMapper.RequestTag tag : tags) {
-                            if (tag.requests[0] == next) {
+                            if (tag.requests[0] == req) {
                                 mCube.setAnimationDuration(tag.time);
                                 mCube.executeAlgorithm(AlgorithmMove.format(tag.move));
                                 break;
@@ -465,16 +463,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
             }
 
             @Override
-            public void chunkFailed(int i, Request req, Response res) {
-            }
-
-            @Override
             public void chunkComplete() {
                 getActivity().runOnUiThread(
                         new Runnable() {
                             @Override
                             public void run() {
-
                                 Toast.makeText(getActivity(), "Cube solved", Toast.LENGTH_LONG).show();
                             }
                         }
