@@ -1,4 +1,4 @@
-use <buildvars.scad>
+use <../buildvars.scad>
 
 function servo_w() = 22.5;
 function servo_d() = 12;

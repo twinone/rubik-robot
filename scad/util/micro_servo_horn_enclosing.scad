@@ -1,4 +1,4 @@
-use <buildvars.scad>
+use <../buildvars.scad>
 use <util.scad>
 
 // global

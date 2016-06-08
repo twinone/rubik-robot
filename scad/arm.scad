@@ -1,7 +1,7 @@
 use <buildvars.scad>
-use <util.scad>
-use <gear.scad>
-use <micro_servo_horn_enclosing.scad>
+use <util/util.scad>
+use <util/gear.scad>
+use <util/micro_servo_horn_enclosing.scad>
 
 teeth = 16;
 r = gear_r();
