@@ -1,9 +1,10 @@
 use <buildvars.scad>
 use <util.scad>
 use <arm.scad>
-use <servo.scad>
 use <gear.scad>
-use <servo_horn_enclosing.scad>
+
+use <micro_servo.scad>
+use <micro_servo_horn_enclosing.scad>
 
 
 function back_x() = 4.31*2;
