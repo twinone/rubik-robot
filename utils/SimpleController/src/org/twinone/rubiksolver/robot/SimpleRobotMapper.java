@@ -33,8 +33,8 @@ public class SimpleRobotMapper {
     protected short delayPerGrip = 250;
     protected short delayPerUngrip = 250;
     protected short delayPerRotation = 500;
-    protected short delayPerFace = 800;
-    protected short delayPerRecover = 200;
+    protected short delayPerFace = 780;
+    protected short delayPerRecover = 50;
 
     public static class RequestTag {
         // Equivalent move executed in the cube
