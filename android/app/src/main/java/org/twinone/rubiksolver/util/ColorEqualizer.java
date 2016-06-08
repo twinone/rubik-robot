@@ -11,13 +11,13 @@ import java.util.List;
 public class ColorEqualizer {
 
     public static final int[] TYPICAL_COLORS = {
-            Color.parseColor("#ff0000"),
-            Color.parseColor("#00ff00"),
-            Color.parseColor("#0000ff"),
-            Color.parseColor("#ffffff"),
-            Color.parseColor("#ffff00"),
-            Color.parseColor("#ff7f00"),
-            Color.parseColor("#000000"),
+        0xFFFFD500,
+        0xFF0051BA,
+        0xFFC41E3A,
+        0xFF009E60,
+        0xFFFF5800,
+        0xFFFFFFFF,
+        0xFF000000,
     };
 
     public static final double LUMINANCE_UPPER_BOUND = 100;
