@@ -38,9 +38,6 @@ module sideways(height) {
     grip_h = 9;
     rotate(-90)
     translate([0,arm_length(),0]) {
-//        linear_extrude(height=height)
-//        arm(length=sideways_length, r=arm_width()/2);
-
         translate([0,0,height-grip_h])
         linear_extrude(height=grip_h)
         translate([sideways_length,-arm_width()/2,0]) square([arm_width()/2,20+arm_width()/2]);
@@ -60,7 +57,7 @@ module arm_left(height) {
 
 module arm_right(height) {
     rotate(180-arm_angle())
-    remove_servo_horn(horns=[true,false,true,false], h1=3)
+    remove_servo_horn(horns=[true,false,true,false], h1=2)
     rotate(180+arm_angle())
     difference() {
         union() {
