@@ -22,8 +22,8 @@ public class ColorEqualizer {
 
     public static final double LUMINANCE_UPPER_BOUND = 100;
     public static final double MAX_LUMINANCE_SCALE_FACTOR = 2.5;
-    public static final double CHROMA_UPPER_BOUND = 75;
-    public static final double MAX_CHROMA_SCALE_FACTOR = 1.5;
+    public static final double CHROMA_UPPER_BOUND = 100;
+    public static final double MAX_CHROMA_SCALE_FACTOR = 2;
     public static final double DISTANCE_CLOSE_THRESHOLD = 30;
     public static final double DISTANCE_OPEN_THRESHOLD = 20;
 
