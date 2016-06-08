@@ -1,10 +1,10 @@
 use <buildvars.scad>
-use <util.scad>
 use <arm.scad>
-use <gear.scad>
 
-use <micro_servo.scad>
-use <micro_servo_horn_enclosing.scad>
+use <util/util.scad>
+use <util/gear.scad>
+use <util/micro_servo.scad>
+use <util/micro_servo_horn_enclosing.scad>
 
 
 function back_x() = 4.31*2;
@@ -15,7 +15,7 @@ function nut_h() = 2.3;
 function grip_pad_h() = servo_base_height();
 
 function back_h() = nut_h()+servo_elevation()+2*servo_base_height();
-function turn_r() = back_h()/2;
+function gripper_r() = back_h()/2;
 function turn_h() = 30;
 function turn_gap_h() = 5;
 function turn_gap_d() = 2;
@@ -38,11 +38,6 @@ module base(servo_hole = true) {
             translate([0,arm_c2c()/2,0])
             circle(r=a?r:r*2);
 
-// // Not needed anymore
-//            translate([arm_inset_y(),arm_c2c()/2-arm_inset_x(),0])
-//            circle(r=r);
-                       
-            // divide by 6 for 1/3 distance
             translate([back_y(),back_x()/2,0])
             circle(r=r);
         }
@@ -80,8 +75,6 @@ module show_servo() {
         rotate([0,0,-90]) {
             translate([0,0,servo_base_height()]) servo();
         }
-//        translate([0,0,servo_elevation()+servo_base_height()])
-//        enclosing();
     }
 }
 
@@ -123,17 +116,6 @@ module pusher_big() {
     arm(r=arm_width()/1.5);    
 }
 
-
-/**
-
-
-OUTPUTS
-
-
-
-*/
-
-
 module turner() {
     
     sr = turn_sr();
@@ -166,37 +148,30 @@ module turner() {
         translate([-br+sr-pad,0,h/2])
         rotate([0,-90,0]) {
             difference() {
-                difference() {
-                    cylinder(r=h/2, h=turn_h()+sr);
-                    translate([0,0,sr+(turn_h())/2-gap_h/2])
-                    difference() {
-                        cylinder(h=gap_h, r=h/2+1);
-                        cylinder(h=gap_h, r=h/2-gap_d);
-                    }
-                }
+                cylinder(r=h/2, h=turn_h()+sr);
                 
                 translate([0,0,turn_h()+sr-sd])
                 turner_screws(h=sd);
-    //            cylinder(r=screw_r(),h=sd); // yes, without tolerance
             }
-    //        translate([0,0,turn_h()+sr])
-    //        gear(r=turn_gear_r(), teeth=15, h = 4);
         }
+        
         s(h);
     }
 }
 
 module turner_screws(h, r=screw_r()) {
+    $fn=20;
     sdst = 4;
     n = 3;
+    in = 10;
     for (i = [0:n-1])
     rotate(360/n*i)
-    translate([sdst,0,0])
-    cylinder(r=r,h=h);
+    translate([sdst,0,-in])
+    cylinder(r=r,h=60);
 }
 
 module display_turner() {
-    translate([turn_br()+turn_pad(),0,-turn_r()]) turner();
+    translate([turn_br()+turn_pad(),0,-gripper_r()]) turner();
 }
 
 
@@ -233,34 +208,4 @@ module display_gripper() {
     turner();
 }
 
-
-// to print:
-module print() {
-    arm_angle = 0;
-
-    $fn=80;
-    
-    translate([-30,50,servo_base_height()])
-    base();
-    
-    translate([-30,120,servo_base_height()])
-    top();
-    
-    
-    translate([0,-50,0])
-    arms(height = servo_base_height(), center = true, extrasep = 5);
-    
-    translate([30,0,0])
-    !rotate([180,0,0])
-    pusher_big();
-    
-    turner();
-    
-    //enclosing(shhb=2);
-
-}
-
-//translate([back_y(),0,servo_base_height()]*-1)
-//translate([turn_br()+turn_pad(),0,-turn_r()])
-//display_gripper();
-print();
+display_gripper();
