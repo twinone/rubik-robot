@@ -286,6 +286,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
 
     public void startScan() {
         mButtonGrip.setVisibility(View.GONE);
+        mButtonFlash.setVisibility(View.GONE);
 
         SimpleRobotMapper mapper = getMapper();
         List<Request> requests = new ArrayList<>();

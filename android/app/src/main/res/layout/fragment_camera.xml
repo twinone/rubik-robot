@@ -20,21 +20,21 @@
         <Button
             android:id="@+id/button_grip"
             android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_height="50dp"
             android:gravity="center"
             android:text="@string/grip" />
 
         <Button
             android:id="@+id/button_flash"
             android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_height="50dp"
             android:gravity="center"
             android:text="@string/flash" />
 
         <Button
             android:id="@+id/button_solve"
             android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_height="50dp"
             android:gravity="center"
             android:text="@string/solve_cube"
             android:visibility="gone" />
