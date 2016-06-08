@@ -30,6 +30,8 @@ import org.twinone.rubiksolver.robot.comm.ResumeRequest;
 public class RobotScheduler implements AutoCloseable {
 
     public interface ChunkListener {
+        void requestBegin(int i, Request req);
+
         void requestComplete(int i, Request req);
 
         void chunkFailed(int i, Request req, Response res);
@@ -38,6 +40,9 @@ public class RobotScheduler implements AutoCloseable {
     }
 
     public static abstract class ChunkAdapter implements ChunkListener {
+        @Override
+        public void requestBegin(int i, Request req) {
+        }
 
         @Override
         public void requestComplete(int i, Request req) {
@@ -142,6 +147,7 @@ public class RobotScheduler implements AutoCloseable {
         while (toSend != null || !buffer.isEmpty()) {
             // Dequeue request
             Request toCheck = buffer.remove();
+            if (chunk.listener != null) chunk.listener.requestBegin(idx, toCheck);
             Response response = Packet.readResponse(input);
             if (response == null || !response.isOk()) {
                 if (chunk.listener != null) chunk.listener.chunkFailed(idx, toCheck, response);
