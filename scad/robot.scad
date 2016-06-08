@@ -1,15 +1,16 @@
 use <scad-utils/morphology.scad>
-use <gripper/gripper.scad>
-use <gripper/buildvars.scad>
-use <gripper/gear.scad>
-use <gripper/big_servo_enclosing.scad>
-use <gripper/micro_servo_horn_enclosing.scad>
-use <gripper/arm.scad>
-use <gripper/micro_servo.scad>
+
+use <buildvars.scad>
+use <gripper.scad>
+use <arm.scad>
+
+use <util/gear.scad>
+use <util/big_servo_enclosing.scad>
+use <util/micro_servo_horn_enclosing.scad>
+use <util/micro_servo.scad>
     
 function holder_h() = 80; // height to center
 function holder_d() = turn_h();
-function gripper_r() = turn_r();
 function holder_th() = 8;
 function holder_w() = gripper_r()*2+holder_th()*2;
 function holder_dst() = 183;
@@ -352,7 +353,7 @@ module display() {
     // full gripper
     rotate([90,0,0])
     translate([back_y(),0,servo_base_height()]*-1)
-    translate([turn_br()+turn_pad(),0,-turn_r()])
+    translate([turn_br()+turn_pad(),0,-gripper_r()])
     display_gripper();
 
     // only turner
