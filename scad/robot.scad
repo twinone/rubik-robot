@@ -415,8 +415,4 @@ module print() {
 
 }
 
-//turner_gear();
-
-//holder_top($fn=50);
 display4();
-// print();
