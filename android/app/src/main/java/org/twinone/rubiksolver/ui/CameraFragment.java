@@ -49,7 +49,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     //TODO: implement progress bar for solving and executing
     //TODO: verify state is solvable before attempting to solve
     //FIXME: preload webview
-    //TODO: make lookAtFace and algorithm/setAnimationDuration work
+    //TODO: acquire screen lock while solving
 
     private static final boolean DBG = false;
     private static final String DBG_STATE = CubeWebView.STATE_SOLVED;
