@@ -12,6 +12,30 @@ import java.util.List;
  * Maps algorithm moves to backend requests.
  */
 public class SimpleRobotMapper {
+
+    protected int[] calibrationOffset = {
+            138,  43,
+            146, 119,
+            92, 133,
+            150,  24,
+    };
+
+    // Gripper-specific
+    protected int gripAngle = +30;
+    protected int ungripAngle = -40;
+
+    // Rotation-specific
+    protected int turnAngle = 103;
+    protected int[] overshootAngle = { 10, 5, 5, 8 };
+    protected int recoverAngle = -10;
+
+    // Delays
+    protected short delayPerGrip = 250;
+    protected short delayPerUngrip = 250;
+    protected short delayPerRotation = 500;
+    protected short delayPerFace = 800;
+    protected short delayPerRecover = 200;
+
     public static class RequestTag {
         // Equivalent move executed in the cube
         public AlgorithmMove move;
@@ -36,23 +60,6 @@ public class SimpleRobotMapper {
     }
 
     //FIXME: accessors for this
-    
-    protected int[] calibrationOffset = {
-        138,  43,
-        146, 119,
-         92, 133,
-        150,  24,
-    };
-
-    // Gripper-specific
-    protected int gripAngle = +30;
-    protected int ungripAngle = -40;
-
-    // Rotation-specific
-    protected int turnAngle = 103;
-    protected int[] overshootAngle = { 10, 5, 5, 8 };
-    protected int recoverAngle = -10;
-
 
     public WriteRequest gripSide(int side, boolean grip, int offset) {
         int motor = Request.getMotor(side, Request.MOTOR_GRIP);
@@ -97,12 +104,6 @@ public class SimpleRobotMapper {
 
         throw new IllegalArgumentException("Unknown move");
     }
-
-    protected short delayPerGrip = 250;
-    protected short delayPerUngrip = 250;
-    protected short delayPerRotation = 500;
-    protected short delayPerFace = 800;
-    protected short delayPerRecover = 200;
 
     public void setDelayPerGrip(short delayPerGrip) {
         this.delayPerGrip = delayPerGrip;

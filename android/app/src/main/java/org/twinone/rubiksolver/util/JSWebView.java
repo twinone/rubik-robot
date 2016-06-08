@@ -28,7 +28,6 @@ public class JSWebView extends WebView {
 
     public void js(String function, Object... params) {
         String js = constructFunction(function, params);
-        Log.d("JSWebView", "Evaluating javascript: " + js);
         evaluateJavascript(js, null);
     }
 
