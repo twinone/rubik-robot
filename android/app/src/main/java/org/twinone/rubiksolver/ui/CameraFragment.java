@@ -56,6 +56,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     private static final String TAG = "CameraFragment";
     private static final double COLOR_ERROR_GAMMA = 2.2;
     private static final int REQUEST_ID = 1;
+    private static final float ANIM_TIME_FACTOR = 0.9f;
 
     // Views
     private RelativeLayout mRootView;
@@ -359,7 +360,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
     private void onAllFacesScanned() {
         mFaceCapturer.stop();
 
-
         List<Sticker> stickers = new ArrayList<>();
 
         for (int i = 0; i < 6; i++) {
@@ -453,7 +453,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                     public void run() {
                         for (SimpleRobotMapper.RequestTag tag : tags) {
                             if (tag.requests[0] == req) {
-                                mCube.setAnimationDuration(tag.time);
+                                mCube.setAnimationDuration(Math.round(tag.time * ANIM_TIME_FACTOR));
                                 mCube.algorithm(AlgorithmMove.format(tag.move));
                                 break;
                             }
