@@ -15,8 +15,6 @@ l2 = sideways_length;
 function arm_angle() = atan(l2/l1);
 function arm_diagonal_length() = sqrt(l1*l1+l2*l2);
 
-
-
 // length: center to center length
 module arm(length, r=arm_width()/2, center = false, s1=true, s2=true) {
     move = center ? -length/2 : 0;
@@ -62,7 +60,7 @@ module arm_left(height) {
 
 module arm_right(height) {
     rotate(180-arm_angle())
-    remove_servo_horn(horns=[true,false,true,false], h1=0)
+    remove_servo_horn(horns=[true,false,true,false], h1=3)
     rotate(180+arm_angle())
     difference() {
         union() {
@@ -71,14 +69,9 @@ module arm_right(height) {
             rotate(-arm_angle())
             linear_extrude(height=height) {
                 arm(length=arm_diagonal_length(), r = arm_width()/2,s2=false);
-//                rotate(180)arm(length=enclosing_dst_small(), r=arm_width()/2);
             }
             sideways(height);
         }
-//        linear_extrude(height=height) {
-//            enclosing_centered_holes();
-//            circle(r=(screw_r()+tolerance())*2);
-//        }
     }
 }
 
