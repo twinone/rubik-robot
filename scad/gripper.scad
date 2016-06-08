@@ -3,27 +3,9 @@ use <arm.scad>
 
 use <util/util.scad>
 use <util/gear.scad>
-use <util/micro_servo.scad>
-use <util/micro_servo_horn_enclosing.scad>
+use <util/mservo.scad>
+use <util/mservo_enclosing.scad>
 
-
-function back_x() = 4.31*2;
-function back_y() = -gear_r()-10;
-function base_rounding_radius() = 7;
-function nut_h() = 2.3;
-
-function grip_pad_h() = servo_base_height();
-
-function back_h() = nut_h()+servo_elevation()+2*servo_base_height();
-function gripper_r() = back_h()/2;
-function turn_h() = 30;
-function turn_gap_h() = 5;
-function turn_gap_d() = 2;
-function turn_br() = base_rounding_radius();
-function turn_sr() = turn_br()/2;
-function turn_mr() = (turn_br()+turn_sr())/2;
-function turn_pad() = 2;
-function turn_gear_r() = 6;
 
 module dup(vec=[0,1,0]) {
     children();
