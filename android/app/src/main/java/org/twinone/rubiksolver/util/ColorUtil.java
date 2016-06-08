@@ -26,7 +26,16 @@ public class ColorUtil {
     }
 
     public static double colorDistanceCore(double[] lab1, double[] lab2) {
-        return Math.sqrt(Math.pow(lab2[0] - lab1[0], 2) + Math.pow(lab2[1] - lab1[1], 2) + Math.pow(lab2[2] - lab1[2], 2));
+        double lab = new double[] {lab2[0] - lab1[0], lab2[1] - lab1[1], lab2[2] - lab1[2]};
+        double C1 = Math.sqrt(lab1[1] * lab1[1] + lab1[2] * lab1[2]);
+        double C2 = Math.sqrt(lab2[1] * lab2[1] + lab2[2] * lab2[2]);
+        double Ci = C2 - C1;
+        double Hi = Math.sqrt(lab[1] * lab[1] + lab[2] * lab[2] - Ci * Ci);
+
+        double kL = 1, kC = 1, kH = 1, K1 = .045, K2 = .015;
+        double SL = 1, SC = 1 + K1 * C1, SH = 1 + K2 * C2;
+        double dL = lab[0] / (kL * SL), dC = Ci / (kC * SC), dH = Hi / (kH * SH);
+        return Math.sqrt(dL * dL + dC * dC + dH * dH);
     }
 
     /**
