@@ -148,12 +148,8 @@ public class HighlightView extends View implements View.OnTouchListener {
         } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
             if (mHitVertex != -1) {
                 // Don't allow crossing the center
-                float x = (mHitVertex == TOP_LEFT || mHitVertex == BOTTOM_LEFT)
-                        ? (Math.min(mParentW / 2, event.getX()))
-                        : (Math.max(mParentW / 2, event.getX()));
-                float y = (mHitVertex == TOP_LEFT || mHitVertex == TOP_RIGHT)
-                        ? (Math.min(mParentH / 2, event.getY()))
-                        : (Math.max(mParentH / 2, event.getY()));
+                float x = event.getX();
+                float y = event.getY();
 
                 mCoords[mHitVertex].x = Math.round(x);
                 mCoords[mHitVertex].y = Math.round(y);
