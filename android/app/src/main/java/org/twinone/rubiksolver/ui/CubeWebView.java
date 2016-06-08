@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.webkit.JavascriptInterface;
 
 import org.twinone.rubiksolver.util.JSWebView;
@@ -157,11 +158,12 @@ public class CubeWebView extends JSWebView {
         cubeJs("setAnimationDuration", duration);
     }
 
-    public void executeAlgorithm(String algorithm) {
+    public void algorithm(String algorithm) {
+        Log.d("CubeWebView", "Alg " +  algorithm);
         cubeJs("algorithm", algorithm);
     }
 
-    public void setColors(List<Integer> colors) {
+    public void setStickerColors(List<Integer> colors) {
         StringBuilder sb = new StringBuilder("[");
         boolean sep = false;
         for (int c : colors) {

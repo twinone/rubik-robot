@@ -219,7 +219,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                 mCube.callWhenReady(new Runnable() {
                     @Override
                     public void run() {
-                        mCube.setColors(mFaceColors);
+                        mCube.setStickerColors(mFaceColors);
                         mCube.setState(mState);
                         mCube.cubejsSolve(mState, CameraFragment.this);
                     }
@@ -456,7 +456,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Fa
                         for (SimpleRobotMapper.RequestTag tag : tags) {
                             if (tag.requests[0] == next) {
                                 mCube.setAnimationDuration(tag.time);
-                                mCube.executeAlgorithm(AlgorithmMove.format(tag.move));
+                                mCube.algorithm(AlgorithmMove.format(tag.move));
                                 break;
                             }
                         }
