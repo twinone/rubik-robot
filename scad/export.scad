@@ -6,7 +6,7 @@ use <gears.scad>
 use <foot.scad>
 
 all = false;
-part = "";
+part = "grip_pad";
 
 // ARMS
 module export_arm(left = true, right = true) {
@@ -17,7 +17,7 @@ module export_arm_right() { export_arm(left=false); }
 
 module export_grip_top() { top(); }
 module export_grip_bottom() { base(); }
-module export_grip_pad() { pusher_big(); }
+module export_grip_pad() { translate([0,0,4]) rotate([180,0,0]) pusher_big(); }
 module export_grip_cylinder() { translate([0,0,turn_h()]) rotate([0,-90,0]) display_turner(); }
 
 
