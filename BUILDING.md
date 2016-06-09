@@ -23,6 +23,8 @@ Amount | Piece | 1 Piece time | Total time | Support
 
 Total printing time: 27h
 
+You can print them all using a 15-20% infill and walls of 1mm. Layer height of up to 3mm is fine.
+
 * Screws & bolts (M3)
 
 Amount | Length (mm)
