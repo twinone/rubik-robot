@@ -28,13 +28,15 @@ You can print them all using a 15-20% infill and walls of 1mm. Layer height of u
 
 * Non-printable hardware
 
-Amount | Type
---- | ---
-4x | [Tower Pro MG90S micro servo](http://www.aliexpress.com/item/New-MG90S-Gear-Metal-Servo-Micro-Servo-For-Boat-Car-Plane-Helicopter/32627521737.html)
-4x | [Tower Pro MG995 servo](http://www.aliexpress.com/item/Towerpro-Servos-Digital-MG995-Servo-Metal-Gear-for-Arduino-Board-DIY-Smart-Vehicle-Helicopter-Airplane-Aeroplane/32465724289.html?spm=2114.01010208.3.20.8k8Rny&ws_ab_test=searchweb201556_0,searchweb201602_1_10037_10017_507_10032_401,searchweb201603_6&btsid=a9de8b50-e2ea-4e2f-8265-d85bdd6a58ad)
-1x | [Arduino Nano V3.0](http://www.aliexpress.com/item/Nano-CH340-ATmega328P-MicroUSB-Compatible-for-Arduino-Nano-V3/32572612009.html?spm=2114.01010208.3.1.kR0wPs&ws_ab_test=searchweb201556_0,searchweb201602_1_10037_10017_507_10032_401,searchweb201603_6&btsid=996c5237-8b2a-4063-bbd8-3e84b59453f0)
-1x | [HC-06 Bluetooth Module](http://www.aliexpress.com/item/Free-shipping-HC06-HC-06-Wireless-Serial-4-Pin-Bluetooth-RF-Transceiver-Module-RS232-TTL-for/32446248487.html?spm=2114.01010208.3.1.6oaKXn&ws_ab_test=searchweb201556_0,searchweb201602_1_10037_10017_507_10032_401,searchweb201603_6&btsid=b3f8c97e-f215-4245-b35a-6c0416e155e0)
-1x | [Breadboard](http://www.aliexpress.com/item/1pcs-Quality-mini-bread-board-breadboard-8-5CM-x-5-5CM-400-holes-For-expansion-arduino/1906352269.html)
- | [Jumper wires](http://www.aliexpress.com/item/120pcs-20cm-male-male-male-female-and-female-jumper-wire-Dupont-cable-for-Arduino/1728903423.html)
+Amount | Type | Unit price | Total price
+--- | --- | --- | ---
+4x | [Tower Pro MG90S micro servo](http://www.aliexpress.com/item/New-MG90S-Gear-Metal-Servo-Micro-Servo-For-Boat-Car-Plane-Helicopter/32627521737.html) | $2.74 | $10.96
+4x | [Tower Pro MG995 servo](http://www.aliexpress.com/item/Towerpro-Servos-Digital-MG995-Servo-Metal-Gear-for-Arduino-Board-DIY-Smart-Vehicle-Helicopter-Airplane-Aeroplane/32465724289.html?spm=2114.01010208.3.20.8k8Rny&ws_ab_test=searchweb201556_0,searchweb201602_1_10037_10017_507_10032_401,searchweb201603_6&btsid=a9de8b50-e2ea-4e2f-8265-d85bdd6a58ad) | $3.86 | $15.44
+1x | [Arduino Nano V3.0](http://www.aliexpress.com/item/Nano-CH340-ATmega328P-MicroUSB-Compatible-for-Arduino-Nano-V3/32572612009.html?spm=2114.01010208.3.1.kR0wPs&ws_ab_test=searchweb201556_0,searchweb201602_1_10037_10017_507_10032_401,searchweb201603_6&btsid=996c5237-8b2a-4063-bbd8-3e84b59453f0) | $1.88 | $1.88
+1x | [HC-06 Bluetooth Module](http://www.aliexpress.com/item/Free-shipping-HC06-HC-06-Wireless-Serial-4-Pin-Bluetooth-RF-Transceiver-Module-RS232-TTL-for/32446248487.html?spm=2114.01010208.3.1.6oaKXn&ws_ab_test=searchweb201556_0,searchweb201602_1_10037_10017_507_10032_401,searchweb201603_6&btsid=b3f8c97e-f215-4245-b35a-6c0416e155e0) | $2.75 | $2.75
+1x | [Breadboard](http://www.aliexpress.com/item/1pcs-Quality-mini-bread-board-breadboard-8-5CM-x-5-5CM-400-holes-For-expansion-arduino/1906352269.html) | $1.07 | $1.07
+1x | [Jumper wires](http://www.aliexpress.com/item/120pcs-20cm-male-male-male-female-and-female-jumper-wire-Dupont-cable-for-Arduino/1728903423.html) | $2.65 | $2.65
+
+Total price: $34.75 (€30.68)
  
 
