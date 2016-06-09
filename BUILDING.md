@@ -7,17 +7,17 @@ This file contains the steps needed to build the robot
 
 Amount | Piece
 --- | ---
-4x | arm_left
-4x | arm_right
-4x | grip_top
-4x | grip_bottom
-4x | grip_pad
-4x | grip_cylinder
-4x | holder_top
-4x | holder_bottom
-4x | servo_gear
-4x | grip_gear
-8x | foot
+4x | [arm_left](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_left.stl)
+4x | [arm_right](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_right.stl)
+4x | [grip_top](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_top.stl)
+4x | [grip_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_bottom.stl)
+4x | [grip_pad](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_pad.stl)
+4x | [grip_cylinder](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_cylinder.stl)
+4x | [holder_top](https://github.com/twinone/rubik-robot/blob/master/scad/build/holder_top.stl)
+4x | [holder_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/holder_bottom.stl)
+4x | [servo_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/servo_gear.stl)
+4x | [grip_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_gear.stl)
+8x | [foot](https://github.com/twinone/rubik-robot/blob/master/scad/build/foot.stl)
 
 * Screws & bolts (M3)
 
