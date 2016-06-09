@@ -5,6 +5,8 @@ This file contains the steps needed to build the robot
 
 * 3D print the following parts
 
+![overview](https://raw.githubusercontent.com/twinone/rubik-robot/master/scad/overview.png)
+
 Amount | Piece | 1 Piece time | Total time
 --- | --- | --- | ---
 4x | [arm_left](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_left.stl) | 00:25 | 01:40 
