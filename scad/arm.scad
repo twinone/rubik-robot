@@ -73,15 +73,18 @@ module arm_right(height) {
 }
 
 
-module arms(height, center, angle = 0, extrasep = 0) {
+module arms(height = arm_height(), center = true, angle = 0, extrasep = 0, left=true, right=true) {
     move = center ? -arm_c2c()/2 : 0;
     translate([0,move-extrasep,0]) {
+        if(left)
         translate([0,arm_c2c()+extrasep*2,0])
         rotate([0,0,angle])
         arm_left(height);
+        
+        if(right)
         rotate([0,0,-angle])
         arm_right(height);
     }
 }
 
-arms(height = 5, center=true, angle=-0);
+arms();

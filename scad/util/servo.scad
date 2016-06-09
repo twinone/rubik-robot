@@ -1,6 +1,6 @@
 use <../buildvars.scad>
 
-module servo_adapter(th1, th2, eh=3, extra=15) {
+module servo_adapter(th1=2, th2=2, eh=3, extra=15) {
     pad = .4;
     r = 19.9 / 2;
     d = r*2 + pad;
@@ -26,3 +26,5 @@ module servo_adapter(th1, th2, eh=3, extra=15) {
     }
     
 }
+
+servo_adapter(extra=0);

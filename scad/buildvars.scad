@@ -55,3 +55,5 @@ function servo_gear_r() = base_r() * servo_gear_f();
 
 function rail_sep_w() = sh_w()/4;
 
+function arm_height() = 5;
+
