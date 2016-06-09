@@ -9,6 +9,10 @@ if [[ $OPENSCAD == "" ]]; then
 	exit
 fi
 
+if [[ -n "$1" ]]; then
+	PARTS=$1
+fi
+
 for part in $PARTS; do
 	echo $OPENSCAD -D part=\"$part\" -D '$fn='$QUALITY -o build/$part.stl export.scad
 	$OPENSCAD -D part=\"$part\" -D '$fn='$QUALITY -o build/$part.stl export.scad
