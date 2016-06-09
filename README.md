@@ -5,9 +5,17 @@ A low cost, 3D printable Rubik's Cube solving robot.
 
 # Hardware used
 * 3D Printer (BQ Prusa i3 Hephestos)
-* An Android phone
-* 4x micro servo
-* 4x servo
+* An Android phone (OnePlus One)
+* 4x micro servo (TowerPro MG 995)
+* 4x servo (Tower Pro SG 90)
 * Arduino Nano, breadboard, jumper wires, etc.
-* HC-05 Bluetooth module
+* Bluetooth module (HC-05)
 * Screws
+
+
+# Make your own
+See [BUILDING.md](https://github.com/twinone/rubik-robot/blob/master/BUILDING.md)
+
+# Authors
+* [@twinone](https://github.com/twinone)
+* [@jmendeth](https://github.com/jmendeth)
