@@ -7,19 +7,19 @@ This file contains the steps needed to build the robot
 
 ![overview](https://raw.githubusercontent.com/twinone/rubik-robot/master/scad/overview.png)
 
-Amount | Piece | 1 Piece time | Total time
---- | --- | --- | ---
-4x | [arm_left](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_left.stl) | 00:25 | 01:40 
-4x | [arm_right](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_right.stl) | 00:25 | 01:40
-4x | [grip_top](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_top.stl) | 00:40 | 02:40
-4x | [grip_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_bottom.stl) | 00:35 | 02:20
-4x | [grip_pad](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_pad.stl) | 00:05 | 00:20
-4x | [grip_cylinder](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_cylinder.stl) | 00:45 | 03:00
-4x | [holder_top](https://github.com/twinone/rubik-robot/blob/master/scad/build/holder_top.stl) | 00:45 | 03:00
-4x | [holder_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/holder_bottom.stl) | 01:30 | 06:00
-4x | [servo_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/servo_gear.stl) | 00:20 | 01:20
-4x | [grip_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_gear.stl) | 00:20 | 01:20
-8x | [foot](https://github.com/twinone/rubik-robot/blob/master/scad/build/foot.stl) | 01:00 | 04:00
+Amount | Piece | 1 Piece time | Total time | Support
+--- | --- | --- | --- | ---
+4x | [arm_left](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_left.stl) | 00:25 | 01:40 | no
+4x | [arm_right](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_right.stl) | 00:25 | 01:40 | no
+4x | [grip_top](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_top.stl) | 00:40 | 02:40 | no
+4x | [grip_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_bottom.stl) | 00:35 | 02:20 | no
+4x | [grip_pad](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_pad.stl) | 00:05 | 00:20 | no
+4x | [grip_cylinder](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_cylinder.stl) | 00:45 | 03:00 | no
+4x | [holder_top](https://github.com/twinone/rubik-robot/blob/master/scad/build/holder_top.stl) | 00:45 | 03:00 | **yes**
+4x | [holder_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/holder_bottom.stl) | 01:30 | 06:00 | **yes**
+4x | [servo_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/servo_gear.stl) | 00:20 | 01:20 | no
+4x | [grip_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_gear.stl) | 00:20 | 01:20 | no
+8x | [foot](https://github.com/twinone/rubik-robot/blob/master/scad/build/foot.stl) | 01:00 | 04:00 | **yes**
 
 Total printing time: 27h
 
