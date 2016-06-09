@@ -21,9 +21,10 @@ Amount | Piece | 1 Piece time | Total time | Support
 4x | [grip_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_gear.stl) | 00:20 | 01:20 | no
 8x | [foot](https://github.com/twinone/rubik-robot/blob/master/scad/build/foot.stl) | 01:00 | 04:00 | **yes**
 
-Total printing time: 27h
+Total printing time: 27h (measured for a BQ Prusa i3 Hephestos at medium quality)
 
-You can print them all using a 15-20% infill and walls of 1mm. Layer height of up to 0.3mm is fine.
+You can print them all using a 15-20% infill and walls of 1mm. Layer height of up to 0.3mm is fine. It's recommended to print parts one by one, especially the bigger ones, so you don't have to start again more than one piece when one of them fails.
+
 
 * Screws & bolts (M3)
 
