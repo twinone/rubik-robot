@@ -23,3 +23,8 @@ See [BUILDING.md](https://github.com/twinone/rubik-robot/blob/master/BUILDING.md
 * [@twinone](https://github.com/twinone)
 * [@jmendeth](https://github.com/jmendeth)
 
+## License
+
+Everything is MIT-licensed (see `LICENSE`) except this README and
+the documentation files under `docs`, which are under a
+[Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0).
