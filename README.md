@@ -2,7 +2,7 @@
 
 A low cost, 3D printable Rubik's Cube solving robot. This project was built in about two or three weeks, incuding the hardware design, software, etc. Just printing and assembling it should take about two days, so you can do it in a weekend. The total cost of the project is about 45$, from which 35$ are for the non-printable hardware, and 10$ are the actual printed parts.
 
-![robot](https://cloud.githubusercontent.com/assets/4309591/15910761/b8f5c6c6-2dcc-11e6-9fa7-2232c03a1e91.gif)
+![Timelapse of the robot in action](https://cloud.githubusercontent.com/assets/4309591/15910761/b8f5c6c6-2dcc-11e6-9fa7-2232c03a1e91.gif)
 
 ## Hardware used
 
@@ -14,9 +14,17 @@ A low cost, 3D printable Rubik's Cube solving robot. This project was built in a
 * Bluetooth module (HC-05)
 * Screws
 
+## Parts
+
+ - OpenSCAD designs for the printable parts (see `scad/`).
+ - The sketch that runs on the Arduino (see `arduino/`).
+ - An Android application (see `android/`) that uses the camera and works
+   in cooperation with the Arduino to scan and solve the cube automatically.
+ - Standalone utility apps (see `utils/`) for talking to the Arduino.
+
 ## Make your own
 
-See [BUILDING.md](https://github.com/twinone/rubik-robot/blob/master/BUILDING.md)
+See [`BUILDING.md`](https://github.com/twinone/rubik-robot/blob/master/BUILDING.md)
 
 ## Authors
 
