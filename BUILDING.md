@@ -10,7 +10,7 @@ This file contains the steps needed to build the robot
 Amount | Piece | 1 Piece time | Total time | Support
 --- | --- | --- | --- | ---
 4x | [arm_left](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_left.stl) | 00:25 | 01:40 | no
-4x | [arm_right](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_right.stl) | 00:25 | 01:40 | no
+4x | [arm_right](https://github.com/twinone/rubik-robot/blob/master/scad/build/arm_right.stl) | 00:25 | 01:40 | **yes**
 4x | [grip_top](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_top.stl) | 00:40 | 02:40 | no
 4x | [grip_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_bottom.stl) | 00:35 | 02:20 | no
 4x | [grip_pad](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_pad.stl) | 00:05 | 00:20 | no
