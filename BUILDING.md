@@ -19,7 +19,7 @@ Amount | Piece | 1 Piece time | Total time | Support
 4x | [holder_bottom](https://github.com/twinone/rubik-robot/blob/master/scad/build/holder_bottom.stl) | 01:30 | 06:00 | **yes**
 4x | [servo_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/servo_gear.stl) | 00:20 | 01:20 | no
 4x | [grip_gear](https://github.com/twinone/rubik-robot/blob/master/scad/build/grip_gear.stl) | 00:20 | 01:20 | no
-8x | [foot](https://github.com/twinone/rubik-robot/blob/master/scad/build/foot.stl) | 01:00 | 04:00 | **yes**
+8x | [foot](https://github.com/twinone/rubik-robot/blob/master/scad/build/foot.stl) | 01:00 | 08:00 | **yes**
 
 Total printing time: 27h (measured for a BQ Prusa i3 Hephestos at medium quality)
 
