@@ -12,7 +12,7 @@ A low cost, 3D printable Rubik's Cube solving robot. This project was built in a
 * 4x servo (Tower Pro SG 90)
 * Arduino Nano, breadboard, jumper wires, etc.
 * Bluetooth module (HC-05)
-* Screws
+* M3 screws / nuts
 
 ## Parts
 
